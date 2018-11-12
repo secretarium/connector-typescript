@@ -14,10 +14,11 @@ var sec, secretarium = sec = {
 		]
 	},
 
-	WebSocket: class {
+	scp: class {
 
 		constructor() {
 			this.reset();
+			this.requests = {};
 		}
 
 		reset() {
@@ -26,6 +27,7 @@ var sec, secretarium = sec = {
 				socket: {
 					onMessage: null
 				},
+				onError: null,
 				onMessage: null,
 				state: {
 					onChange: null
@@ -50,7 +52,8 @@ var sec, secretarium = sec = {
 		}
 
 		async connect(url, protocol, userKey) {
-			let s = new nng.WebSocket(), self = this, secKnownPubKey = new Uint8Array(sec.utils.base64ToUint8Array(sec.knownTrustedKey));
+			let s = new nng.WebSocket(), self = this,
+				secKnownPubKey = new Uint8Array(sec.utils.base64ToUint8Array(sec.knownTrustedKey));
 
 			this.socket = s;
 			this._updateState(0);
@@ -68,11 +71,11 @@ var sec, secretarium = sec = {
 				s.on("error", e => { self._updateState(0); });
 				let userPubExp = await window.crypto.subtle.exportKey("raw", userKey.publicKey);
 				self.security.client.ecdsaPubRaw = new Uint8Array(userPubExp).subarray(1);
-				console.log("client ECDSA pub key:" + Array.apply([], self.security.client.ecdsaPubRaw).join(","));
+				console.debug("client ECDSA pub key:" + Array.apply([], self.security.client.ecdsaPubRaw).join(","));
 				self.security.client.ecdh = await window.crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
 				let ecdhPubExp = await window.crypto.subtle.exportKey("raw", self.security.client.ecdh.publicKey);
 				self.security.client.ecdhPubRaw = new Uint8Array(ecdhPubExp).subarray(1);
-				console.log("client ephemereal ECDH pub key:" + Array.apply([], self.security.client.ecdhPubRaw).join(","));
+				console.debug("client ephemereal ECDH pub key:" + Array.apply([], self.security.client.ecdhPubRaw).join(","));
 				return new Promise((resolve, reject) => {
 					let clientHello = self.security.client.ecdhPubRaw;
 					s.on("message", x => { resolve(x); }).send(clientHello);
@@ -115,8 +118,8 @@ var sec, secretarium = sec = {
 					key: key, iv: symmetricKey.subarray(16),
 					cryptokey: await window.crypto.subtle.importKey("raw", key, { name: "AES-CTR" }, false, ["encrypt", "decrypt"])
 				}
-				console.log("aesctr.key:" + Array.apply([], self.aesctr.key).join(","));
-				console.log("aesctr.iv:" + Array.apply([], self.aesctr.iv).join(","));
+				console.debug("aesctr.key:" + Array.apply([], self.aesctr.key).join(","));
+				console.debug("aesctr.iv:" + Array.apply([], self.aesctr.iv).join(","));
 
 				let nonce = sec.utils.getRandomUint8Array(32),
 					signedNonce = new Uint8Array(await sec.utils.ecdsa.sign(nonce, userKey.privateKey)),
@@ -126,9 +129,9 @@ var sec, secretarium = sec = {
 					iv = self.aesctr.iv.secIncrementBy(ivOffset),
 					encryptedClientProofOfIdentity = await window.crypto.subtle.encrypt(
 						{ name: "AES-CTR", counter: iv, length: 128 }, self.aesctr.cryptokey, clientProofOfIdentity)
-				console.log("ivOffset:" + Array.apply([], ivOffset).join(","));
-				console.log("ivIncremented:" + Array.apply([], iv).join(","));
-				console.log("clientProofOfIdentity:" + Array.apply([], clientProofOfIdentity).join(","));
+				console.debug("ivOffset:" + Array.apply([], ivOffset).join(","));
+				console.debug("ivIncremented:" + Array.apply([], iv).join(","));
+				console.debug("clientProofOfIdentity:" + Array.apply([], clientProofOfIdentity).join(","));
 				return new Promise((resolve, reject) => {
 					let m = sec.utils.concatUint8Arrays([ivOffset, new Uint8Array(encryptedClientProofOfIdentity)]);
 					s.on("message", x => { resolve(x); }).send(m);
@@ -147,7 +150,10 @@ var sec, secretarium = sec = {
 					throw "Invalid server proof of identity";
 
 				self._updateState(2);
-				s.on("message", self.handlers.socket.onMessage);
+				if(self.handlers.onMessage == null)
+					self.handlers.onMessage = self._notify.bind(self);
+				s.on("message", self._onMessage.bind(self));
+				self.connectionArgs = [url, protocol, userKey];
 			})
 			.catch(err => {
 				console.log(err);
@@ -157,27 +163,79 @@ var sec, secretarium = sec = {
 			});
 		}
 
-		on(evt, handler) {
-			if(evt == "message") {
-				var self = this;
-				if(this.handlers.onMessage == null) {
-					this.handlers.socket.onMessage = function(x) {
-						let iv = self.aesctr.iv.secIncrementBy(x.subarray(0, 16));
-						window.crypto.subtle.decrypt({ name: "AES-CTR", counter: iv, length: 128 }, self.aesctr.cryptokey, x.subarray(16))
-						.then(decrypted => {
-							let msg = new Uint8Array(decrypted);
-							console.log("received:" + Array.apply([], msg).join(","));
-							self.handlers.onMessage(msg);
-						});
+		async _onMessage(x) {
+			let self = this, iv = self.aesctr.iv.secIncrementBy(x.subarray(0, 16));
+			console.debug("received bytes (encrypted):" + Array.apply([], x).join(","));
+			console.debug("received ivOffset:" + Array.apply([], x.subarray(0, 16)).join(","));
+			console.debug("received iv:" + Array.apply([], iv).join(","));
+			let decrypted = await window.crypto.subtle.decrypt(
+					{ name: "AES-CTR", counter: iv, length: 128 }, self.aesctr.cryptokey, x.subarray(16)),
+				msg = sec.utils.decode(new Uint8Array(decrypted));
+			console.debug("received:" + msg);
+			self.handlers.onMessage(msg);
+		}
+
+		_notify(msg) {
+			try {
+				let o = JSON.parse(msg);
+				if(o != null && o.requestId) {
+					if(this.requests[o.requestId]) {
+						if(o.error) {
+							if(this.requests[o.requestId]["onError"])
+								this.requests[o.requestId]["onError"](o.error);
+						}
+						else if(o.result) {
+							if(this.requests[o.requestId]["onResult"])
+								this.requests[o.requestId]["onResult"](o.result);
+						}
+						else if(o.state) {
+							o.state = o.state.toLowerCase();
+							if(o.state == "acknowledged") {
+								if(this.requests[o.requestId]["onAcknowledged"])
+									this.requests[o.requestId]["onAcknowledged"]();
+							}
+							else if(o.state == "proposed") {
+								if(this.requests[o.requestId]["onProposed"])
+									this.requests[o.requestId]["onProposed"]();
+							}
+							else if(o.state == "committed") {
+								if(this.requests[o.requestId]["onCommitted"])
+									this.requests[o.requestId]["onCommitted"]();
+							}
+							else if(o.state == "executed") {
+								if(this.requests[o.requestId]["onExecuted"])
+									this.requests[o.requestId]["onExecuted"]();
+							}
+							else if(o.state == "failed") {
+								if(this.requests[o.requestId]["onFailed"])
+									this.requests[o.requestId]["onFailed"]();
+							}
+						}
+						else {
+							if(this.requests[o.requestId]["onResult"])
+								if(this.requests[o.requestId]["onResult"](o) !== false)
+									delete this.requests[o.requestId];
+						}
 					}
 				}
+			}
+			catch(e) {
+				if(this.handlers.onError)
+					this.handlers.onError("Error, can't parse message " + msg);
+				else
+					console.error("received:can't parse " + msg);
+			}
+		}
+
+		on(evt, handler) {
+			if(evt == "message") {
 				this.handlers.onMessage = handler;
-				this.socket.on(evt, this.handlers.socket.onMessage);
 			} else if(evt == "close") {
 				this.socket.on(evt, handler);
 			} else if(evt == "open") {
 				this.socket.on(evt, handler);
 			} else if(evt == "error") {
+				this.handlers.onError = handler;
 				this.socket.on(evt, handler);
 			} else if(evt == "statechange") {
 				this.handlers.state.onChange = handler;
@@ -185,19 +243,59 @@ var sec, secretarium = sec = {
 			return this;
 		}
 
-		async send(data) {
-			let ivOffset = sec.utils.getRandomUint8Array(16),
-				iv = this.aesctr.iv.secIncrementBy(ivOffset),
-				msg = await window.crypto.subtle.encrypt({ name: "AES-CTR", counter: iv, length: 128 }, this.aesctr.cryptokey, data);
-
-			console.log("sending message");
-			console.log("ivOffset:" + Array.apply([], ivOffset).join(","));
-			console.log("iv:" + Array.apply([], iv).join(","));
-			console.log("msg:" + Array.apply([], data).join(","));
-			console.log("msgEncrypted:" + Array.apply([], new Uint8Array(msg)).join(","));
-
-			this.socket.send(sec.utils.concatUint8Array(ivOffset, new Uint8Array(msg)));
+		sendQuery(dcapp, command, requestId, args) {
+			let query = JSON.stringify({ "dcapp": dcapp, "function": command, "requestId": requestId, args: args });
+			console.debug("sending:" + query);
+			this.send(sec.utils.encode(query));
+			if(requestId) {
+				let cbs = this.requests[requestId] = {},
+					res = {
+						onError: x => { cbs["onError"] = x; return res; },
+						onResult: x => { cbs["onResult"] = x; return res; }
+					};
+				return res;
+			}
 			return this;
+		}
+
+		sendTx(dcapp, command, requestId, args) {
+			let query = JSON.stringify({ "dcapp": dcapp, "function": command, "requestId": requestId, args: args });
+			console.debug("sending:" + query);
+			this.send(sec.utils.encode(query));
+			if(requestId) {
+				let cbs = this.requests[requestId] = {},
+					res = {
+						onError: x => { cbs["onError"] = x; return res; },
+						onAcknowledged: x => { cbs["onAcknowledged"] = x; return res; },
+						onProposed: x => { cbs["onProposed"] = x; return res; },
+						onCommitted: x => { cbs["onCommitted"] = x; return res; },
+						onExecuted: x => { cbs["onExecuted"] = x; return res; },
+						onFailed: x => { cbs["onFailed"] = x; return res; }
+					};
+				return res;
+			}
+			return this;
+		}
+
+		async send(data) {
+			if (this.socket.state !== 1)
+				return;
+
+			let ivOffset = sec.utils.getRandomUint8Array(16),
+				iv = this.aesctr.iv.secIncrementBy(ivOffset), self = this;
+
+			return window.crypto.subtle.encrypt({ name: "AES-CTR", counter: iv, length: 128 }, this.aesctr.cryptokey, data)
+				.then(msg => {
+					let full = sec.utils.concatUint8Array(ivOffset, new Uint8Array(msg));
+
+					console.debug("sending ivOffset:" + Array.apply([], ivOffset).join(","));
+					console.debug("sending iv:" + Array.apply([], iv).join(","));
+					console.debug("sending bytes:" + Array.apply([], data).join(","));
+					console.debug("sending bytes encrypted:" + Array.apply([], new Uint8Array(msg)).join(","));
+					console.debug("sending full:" + Array.apply([], new Uint8Array(full)).join(","));
+
+					self.socket.send(full);
+				});
 		}
 
 		close() {
