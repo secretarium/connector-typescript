@@ -1,0 +1,18 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "target": "ES6",
+        "module": "commonjs",
+        "sourceMap": true,
+        "noImplicitAny": true,
+        "outDir": "./dist",
+        "lib": [
+            "ES5",
+            "ES6",
+            "DOM"
+        ]
+    },
+    "include": [
+        "./src/**/*"
+    ]
+}
