@@ -1,0 +1,33 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <script>
+            window.onmessage = e => {
+                if (!window.parent || !e.data || !e.data.type)
+                    return;
+                if (!/^https:\/\/(.*\.)?(secretarium|swisscom)\.(com|org|tech|ch|dev)\/?$/.test(e.origin))
+                    return;
+
+                switch(e.data.type) {
+                    case 'set':
+                        if(!e.data) return;
+                        var keysJson = localStorage.getItem('secretarium-keys');
+                        if(keysJson == "")
+                            localStorage.setItem('secretarium-keys', [JSON.stringify(e.data)]);
+                        else {
+                            let keys = JSON.parse(keysJson);
+                            keys.push(JSON.stringify(e.data));
+                            keys.sort((a, b) => a.name - b.name);
+                            localStorage.setItem('secretarium-keys', JSON.stringify(keys));
+                        }
+                        break;
+                    case 'get':
+                        var keysJson = localStorage.getItem('secretarium-keys');
+                        window.parent.postMessage(keysJson, e.origin);
+                        break;
+                }
+            };
+        </script>
+    </head>
+    <body></body>
+</html>
