@@ -3,11 +3,11 @@
        {
            "extensionName": ".min.css",
            "format": "compressed",
-           "savePath": "/styles"
+           "savePath": "/demo/styles"
        }
    ],
    "liveSassCompile.settings.includeItems": [
-      "/styles/demo.scss"
+      "/demo/styles/demo.scss"
    ],
    "liveSassCompile.settings.generateMap": false
 }

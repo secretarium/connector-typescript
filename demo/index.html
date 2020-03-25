@@ -179,29 +179,12 @@
 		</content>
 	</div>
 
-	<script type="text/x-template" id="sec-key-decrypt">
-	</script>
-	<script type="text/x-template" id="sec-key-create">
-		<div class="py-2">
-		</div>
-	</script>
-	<script type="text/x-template" id="sec-key-browse">
-		<span>
-			<label for="sec-loadkey-file" class="btn btn-link p-0">Browse from disk</label>
-			<input type="file" id="sec-loadkey-file" accept=".secretarium" class="d-none" @change="onKeyFile" />
-		</span>
-	</script>
-
 	<script>
 		var onDrop = null;
 		const onResize = {}, isDev = window.location.hostname.includes(".dev") || window.location.hostname.includes("dev-local"),
 			store = {
 				user: { key: null },
 				keysManager: new Secretarium.KeysManager()
-			},
-			state = {
-				icons: ["fa-hourglass-start", "fa-check", "fa-exclamation-circle"],
-				colors: ["text-warning", "text-success", "text-danger"]
 			};
 
 		Vue.component('sec-notif-state', {
