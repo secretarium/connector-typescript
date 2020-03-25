@@ -129,6 +129,7 @@ namespace Secretarium {
         private init() {
             window.addEventListener('message', e => {
                 if (e.origin !== "https://secretarium.com") return;
+                if (!e.data) return;
 
                 const keys = JSON.parse(e.data);
                 for (var lsKey of keys) {
@@ -155,7 +156,7 @@ namespace Secretarium {
 
             const f = document.createElement("iframe");
             f.setAttribute("src", "https://secretarium.com/user-keys/");
-            f.setAttribute("id", "secretarium-com-local-storage");
+            f.setAttribute("id", "secretarium-com-frame");
             f.style.display = "none";
             f.onload = () => {
                 f.contentWindow.postMessage({ type: "get" }, "https://secretarium.com");
@@ -222,18 +223,14 @@ namespace Secretarium {
             });
         }
 
-        removeKey(name: string): void {
-            let index = this.keys.findIndex(k => k.name == name);
-            if (index < 0) return;
-            if (this.keys[index].exportUrl) URL.revokeObjectURL(this.keys[index].exportUrl);
-            this.keys.splice(index, 1); // for reactivity purposes
-            this.save();
+        removeKey(key: Key): void {
+            const f = document.getElementById("secretarium-com-frame") as HTMLIFrameElement;
+            f.contentWindow.postMessage({ type: "remove", data: { name: key.name, version: key.version } }, "https://secretarium.com");
         }
 
-        save(): void {
-            const toSave = this.keys.filter(k => k.save).map(key => key.exportableKeyEncrypted || key.exportableKey);
-            const secretariumComFrame = document.getElementById("secretarium-com-local-storage") as HTMLIFrameElement;
-            secretariumComFrame.contentWindow.postMessage({ type: "set", data: toSave }, "https://secretarium.com");
+        saveKey(key: Key): void {
+            const f = document.getElementById("secretarium-com-frame") as HTMLIFrameElement;
+            f.contentWindow.postMessage({ type: "add", data: { name: key.name, version: key.version } }, "https://secretarium.com");
         }
     }
 }
