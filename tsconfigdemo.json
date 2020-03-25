@@ -5,7 +5,7 @@
         "module": "commonjs",
         "sourceMap": true,
         "noImplicitAny": true,
-        "outDir": "./dist",
+        "outDir": "./demo/scripts",
         "lib": [
             "ES5",
             "ES6",
