@@ -2,14 +2,12 @@
     "name": "@secretarium/connector",
     "version": "0.0.1",
     "description": "Connector for API communication with Secretarium enclave clusters",
-    "main": "lib/commonjs/index.js",
-    "module": "lib/module/index.js",
-    "types": "lib/typescript/index.d.ts",
+    "main": "lib/secretarium.umd.js",
     "scripts": {
         "preinstall": "node ./scripts/hintYarn.js",
         "test": "jest",
-        "build": "tsc",
-        "start": "tsc --watch --noEmit",
+        "build": "webpack --config ./config/webpack.config.js",
+        "start": "webpack --config ./config/webpack.config.js --progress --color --watch",
         "serve": "serve",
         "lint": "eslint --ext .js,.ts,.tsx .",
         "lint:fix": "eslint --fix --ext .js,.ts,.tsx .",
@@ -28,11 +26,20 @@
     },
     "homepage": "https://github.com/secretarium/connector-typescript#readme",
     "devDependencies": {
+        "@babel/core": "7.9.0",
+        "@babel/plugin-transform-runtime": "7.9.0",
+        "@babel/preset-env": "7.9.0",
+        "@babel/preset-typescript": "7.9.0",
+        "@babel/runtime": "7.9.2",
         "@commitlint/config-conventional": "8.3.4",
         "@release-it/conventional-changelog": "1.1.1",
         "@typescript-eslint/eslint-plugin": "2.28.0",
         "@typescript-eslint/parser": "2.28.0",
         "@types/jest": "25.2.1",
+        "babel-loader": "8.1.0",
+        "babel-plugin-add-module-exports": "1.0.2",
+        "babel-plugin-transform-class-properties": "6.24.1",
+        "babel-plugin-rewire-ts": "1.3.3",
         "commitlint": "8.3.5",
         "eslint": "6.8.0",
         "eslint-plugin-flowtype": "4.7.0",
@@ -42,7 +49,10 @@
         "jest": "25.3.0",
         "release-it": "13.5.4",
         "serve": "11.3.0",
-        "typescript": "3.8.3"
+        "typescript": "3.8.3",
+        "uglifyjs-webpack-plugin": "2.2.0",
+        "webpack": "4.42.1",
+        "webpack-cli": "3.3.11"
     },
     "jest": {
         "modulePathIgnorePatterns": [
@@ -75,5 +85,11 @@
     },
     "publishConfig": {
         "access": "public"
+    },
+    "babel": {
+        "extends": "./config/babel.config.js"
+    },
+    "eslintConfig": {
+        "extends": "./config/eslint.config.js"
     }
 }
