@@ -1,0 +1,442 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="description" content="Secretarium is a distributed confidential computing platform guaranteeing privacy by default and by design">
+
+	<title>Secretarium - Entrusted with secrets</title>
+
+	<link rel="stylesheet" href="./styles/bootstrap-4.3.1.min.css" />
+	<link rel="stylesheet" href="./styles/fontawesome-5.7.2.all.min.css" />
+	<link rel="stylesheet" href="./styles/demo.min.css" />
+
+	<script src="./scripts/jquery-3.4.1.min.js"></script>
+	<script src="./scripts/popper-1.14.7.min.js"></script>
+	<script src="./scripts/bootstrap-4.3.1.min.js"></script>
+	<script src="./scripts/vue-2.6.10.js"></script>
+	<script src="./scripts/nng.websocket.js"></script>
+	<script src="./scripts/secretarium.compatibility.js"></script>
+	<script src="./scripts/secretarium.utils.js"></script>
+	<script src="./scripts/secretarium.keymanager.js"></script>
+	<script src="./scripts/secretarium.connector.js"></script>
+	<script src="./scripts/secretarium.notifstate.js"></script>
+</head>
+
+<body>
+	<div id="app" @dragover.prevent @drop.prevent v-cloak>
+		<div id="drop-area"></div>
+		<header class="bg-white" style="position: relative;">
+			<div class="connection-dropped" v-if="connectionState.retrying">
+				{{connectionState.text + (connectionState.connecting ? "": " - ")}}
+				<button v-if="!connectionState.connecting" type="button" class="btn btn-link p-0 m-0 text-white"
+					@click.prevent.stop="connect">retry now</button>
+			</div>
+		</header>
+
+		<content class="p-5">
+			<h4 class="mb-3">User key</h4>
+			<div v-if="$root.store.keysManager.keys.length>0">
+				<div class="form-row sec-key"
+					v-for="(key, i) in $root.store.keysManager.keys" :key="key.name">
+					<div class="col">
+						<button class="btn btn-primary text-left" @click.prevent="$root.setKey(key, i)">
+							{{key.name}}
+							<i class="fas ml-2 text-warning" :class="{'fa-lock':!keyReady,'fa-lock-open':keyReady}"></i>
+						</button>
+						<form class="form-inline d-inline ml-2" @submit.prevent v-if="store.user.key&&store.user.key.name==key.name&&!keyReady">
+							<input type="password" class="form-control" placeholder="Key Password" required v-model="keyPwd">
+							<button type="submit" class="btn btn-primary mx-2" @click.prevent="decrypt">DECRYPT</button>
+							<sec-notif-state :state="nsDecrypt"></sec-notif-state>
+						</form>
+					</div>
+				</div>
+			</div>
+			<div v-else>
+				No key found
+			</div>
+			<div class="mt-2">
+				<a class="text-primary" data-toggle="collapse" href="#userKeyOpt" role="button"
+					aria-expanded="false" aria-controls="userKeyOpt">more options</a>
+			</div>
+			<div class="collapse mt-2" id="userKeyOpt">
+				<div>
+					Create a new key
+					<form class="form-inline d-inline ml-3" @submit.prevent>
+						<input type="text" class="form-control" placeholder="Key name" autocomplete="new-key-name" v-model="createKeyName">
+						<input type="password" class="form-control ml-1" id="id-key-name" placeholder="Key password"
+							autocomplete="new-password" v-model="createKeyPwd" :class="{'is-invalid': keyPwd.length>0&&keyPwd.length<4}">
+						<button type="submit" class="btn btn-primary ml-1" @click.prevent="createKey"
+							:disabled="!canCreateKey">Generate a new key</button>
+						<sec-notif-state :state="nsCreateKey" class="ml-1"></sec-notif-state>
+					</form>
+				</div>
+				<div class="mt-2">
+					Or drop a new key, or <label for="sec-loadkey-file" class="text-primary pointer">browse from disk</label>
+					<input type="file" id="sec-loadkey-file" accept=".secretarium" class="d-none" @change="onKeyFile" />
+				</div>
+			</div>
+			<hr class="my-4">
+
+			<h4 class="mb-3">Connection ({{connectionState.text}})</h4>
+			<form class="mt-3" @submit.prevent>
+				<div class="form-inline">
+					<select class="form-control" v-model="endpoint">
+						<option v-for="x in endpoints" :key="x">{{x}}</option>
+					</select>
+					<input type="text" class="form-control ml-2" placeholder="Endpoint" required v-model="endpoint" style="min-width: 30rem;">
+				</div>
+				<div class="mt-2">
+					<input type="text" class="form-control" placeholder="Trusted Key" required v-model="trustedKey" style="min-width: 50rem;">
+				</div>
+				<div class="mt-2">
+					<button type="submit" class="btn btn-primary" @click.prevent="connect">CONNECT</button>
+					<button type="submit" class="btn btn-primary mx-2" @click.prevent="disconnect">DISCONNECT</button>
+					<sec-notif-state :state="nsConnect"></sec-notif-state>
+				</div>
+			</form>
+			<hr class="my-4">
+
+			<h4 class="mb-3">Commands</h4>
+			<ul class="nav nav-tabs" role="tablist">
+				<li class="nav-item">
+					<a class="nav-link active" data-toggle="tab" href="#query"
+						role="tab" aria-controls="query" aria-selected="true">Query</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" data-toggle="tab" href="#single-tx"
+						role="tab" aria-controls="single-tx">Single Transaction</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" data-toggle="tab" href="#multi-tx"
+						role="tab" aria-controls="multi-tx">Multi Transactions</a>
+				</li>
+			</ul>
+			<div class="tab-content" id="myTabContent">
+				<div class="tab-pane fade show active" id="query" role="tabpanel" aria-labelledby="query-tab">
+					<form @submit.prevent>
+						<div class="form-group mt-3">
+							<label for="id-app-name-q" class="fs-85">Application Name</label>
+							<input type="text" class="form-control" id="id-app-name-q" placeholder="Application Name"
+								style="min-width: 25rem;" required v-model="appName">
+						</div>
+						<div class="form-group mt-3">
+							<label for="id-fct-name-q" class="fs-85">Function Name</label>
+							<input type="text" class="form-control" id="id-fct-name-q" placeholder="Function Name"
+								style="min-width: 25rem;" required v-model="fctName">
+						</div>
+						<div class="form-group mt-3">
+							<label for="id-args-q" class="fs-85">Args</label>
+							<input type="text" class="form-control" id="id-args-q" placeholder="Args"
+								style="min-width: 25rem;" required v-model="args">
+						</div>
+						<div class="mt-3">
+							<button type="submit" class="btn btn-primary mr-3 mw-10" @click.prevent="query">QUERY</button>
+							<sec-notif-state :state="nsQuery"></sec-notif-state>
+						</div>
+					</form>
+				</div>
+				<div class="tab-pane fade" id="single-tx" role="tabpanel" aria-labelledby="single-tx-tab">
+					<form @submit.prevent>
+						<div class="form-group mt-3">
+							<label for="id-app-name" class="fs-85">Application Name</label>
+							<input type="text" class="form-control" id="id-app-name" placeholder="Application Name"
+								style="min-width: 25rem;" required v-model="appName">
+						</div>
+						<div class="form-group mt-3">
+							<label for="id-fct-name" class="fs-85">Function Name</label>
+							<input type="text" class="form-control" id="id-fct-name" placeholder="Function Name"
+								style="min-width: 25rem;" required v-model="fctName">
+						</div>
+						<div class="form-group mt-3">
+							<label for="id-args" class="fs-85">Args</label>
+							<input type="text" class="form-control" id="id-args" placeholder="Args"
+								style="min-width: 25rem;" required v-model="args">
+						</div>
+						<div class="mt-3">
+							<button type="submit" class="btn btn-primary mr-3 mw-10" @click.prevent="runSingle">RUN</button>
+							<sec-notif-state :state="nsSingle"></sec-notif-state>
+						</div>
+					</form>
+				</div>
+				<div class="tab-pane fade" id="multi-tx" role="tabpanel" aria-labelledby="multi-tx-tab">
+					<form @submit.prevent>
+						<textarea class="form-control mt-3" placeholder="Commands Json" rows="8" required v-model="cmdJson">
+						</textarea>
+						<div class="mt-3">
+							<button type="submit" class="btn btn-primary mr-3 mw-10" @click.prevent="runMulti">RUN</button>
+							<sec-notif-state :state="nsMulti"></sec-notif-state>
+						</div>
+						<div class="mt-3">
+							<p v-for="r in multiTx">
+								{{r.requestId}} <sec-notif-state :state="r.ns"></sec-notif-state>
+							</p>
+						</div>
+					</form>
+				</div>
+			</div>
+		</content>
+	</div>
+
+	<script>
+		var onDrop = null;
+		const onResize = {}, isDev = window.location.hostname.includes(".dev") || window.location.hostname.includes("dev-local"),
+			store = {
+				user: { key: null },
+				keysManager: new Secretarium.KeysManager()
+			};
+
+		Vue.component('sec-notif-state', {
+			template: `
+				<span v-if="state.visible" class="notif-state">
+					<span class="notif-state-icon notif-state-chain" v-for="s in state.chained" :key="s.id" v-show="state.chainVisible"
+							:title="s.title" :style="{ opacity: s.opacity||1, 'margin-right': '0.2em' }">
+						<i v-for="(i, k) in s.icons" :key="s.id+'_'+k" class="fas fa" :class="[i.icon, i.color]" :style="i.styles"></i>
+					</span>
+					<span :title="state.global.title" :style="{ opacity: state.global.opacity||1 }" @click.prevent="state.chainVisible=!state.chainVisible">
+						<i v-for="(i, k) in state.global.icons" :key="'g_'+k" class="fas fa" :class="[i.icon, i.color]" :style="i.styles"></i>
+					</span>
+					<span v-show="state.msg" class="small text-muted" style="vertical-align: 10%;">{{state.msg}}</span>
+				</span>
+			`,
+			props: ['state']
+		});
+
+		const app = new Vue({
+			data: () => {
+				return {
+					store: store, connection: null,
+					keyPwd: "", endpoint: "wss://127.0.0.1:5424/", endpoints: [],
+					trustedKey: "rliD_CISqPEeYKbWYdwa-L-8oytAPvdGmbLC0KdvsH-OVMraarm1eo-q4fte0cWJ7-kmsq8wekFIJK0a83_yCg==",
+					appName: "personal-data", fctName: "get", args: "{}", cmdJson: "", multiTx: [],
+					createKeyName: "", createKeyPwd: "",
+					nsSingle: new Secretarium.NotifState(), nsMulti: new Secretarium.NotifState(), nsQuery: new Secretarium.NotifState(),
+					nsDecrypt: new Secretarium.NotifState(), nsConnect: new Secretarium.NotifState(),
+					nsCreateKey: new Secretarium.NotifState()
+				}
+			},
+			computed: {
+				connectionState() {
+					let c = this.connection, r = c && c.retrying;
+					return {
+						text: r ? c.retryingMsg : c && c.scp ? Secretarium.ConnectionStateMessage[c.scp.state] : "closed",
+						retrying: r, connecting: c && c.connecting };
+				},
+				canCreateKey() { return this.createKeyName.length > 0 && this.createKeyPwd.length >= 4; },
+				keyReady() { let k = this.store.user.key; return k && k.cryptoKey; }
+			},
+			mounted() {
+				setOnDrop(this.onKeyFile);
+				fetch('endpoints.json').then(x => x.json()).then(x => { Vue.set(this, "endpoints", x); });
+			},
+			beforeDestroy() {
+				setOnDrop(null);
+			},
+			methods: {
+				async createKey() {
+					this.nsCreateKey.processing("Creating key", true);
+					if(this.createKeyName.length < 1) { this.nsCreateKey.failed("invalid key name", true); return; }
+					if(this.createKeyPwd.length < 4) { this.nsCreateKey.failed("invalid password", true); return; }
+					try {
+						let key = await store.keysManager.createKey(this.createKeyName);
+						key = await store.keysManager.encryptKey(key, this.createKeyPwd);
+						key.save = true;
+						store.keysManager.save();
+						this.$root.setKey(key);
+						this.nsCreateKey.executed("Success", true).hide();
+					}
+					catch(e) {
+						this.nsCreateKey.failed(e, true);
+					}
+				},
+				onKeyFile(evt) {
+					this.store.keysManager.importKeyFile(evt)
+						.catch(err => { alert("invalid-key-file: " + err); })
+						.then((key) => { this.setKey(key); });
+				},
+				setKey(key) {
+					Vue.set(this.store.user, "key", key);
+				},
+				async decrypt() {
+					try {
+						this.nsDecrypt.processing("Decrypting", true);
+						await this.store.user.key.decrypt(this.keyPwd);
+						this.nsDecrypt.executed("Success", true);
+					} catch (err) {
+						this.nsDecrypt.failed(err, true);
+					}
+				},
+				retryConnection() {
+					if(!this.connection)
+						return; // connection never succeeded
+					let scp = this.connection.scp;
+					if(!scp || scp.state < 2)
+						return; // disconnecting, or already connected or connecting
+
+					let timeout = 30 * Math.pow(2, Math.min(this.connection.retryFailures, 4)),
+						countDowner = (t) => {
+							if (document.hidden) { // user moved on to something else, not retrying
+								this.connection.retryingMsg = "Secure connection lost";
+								this.connection.timer = setTimeout(() => countDowner(t), 1000);
+							}
+							else if(--t > 0 && this.connection.timer) {
+								let msg = "Secure connection lost - retrying in " + t + " sec";
+								this.connection.retryingMsg = msg;
+								this.connection.timer = setTimeout(() => countDowner(t), 1000);
+							}
+							else {
+								this.connection.timerElapsed = true;
+								setTimeout(() => {
+									this.connect().catch(e => {});
+								}, 0);
+							}
+						};
+					this.connection.retryingMsg = "Secure connection lost";
+					this.connection.retrying = true;
+					this.connection.timerElapsed = false;
+					this.connection.retryFailures++;
+					this.connection.connecting = false;
+					this.connection.timer = setTimeout(() => countDowner(timeout), 0);
+				},
+				connect() {
+					if(!store.user.key || !store.user.key.cryptoKey)
+						alert ("User key not loaded");
+					if(!this.connection) {
+						this.connection = {
+							endpoint: this.endpoint, scp: null,
+							lastState: 0, timer: null, timerElapsed: false, connecting: true,
+							retrying: false, retryFailures: 0, retryingMsg: ""
+						};
+					}
+					this.connection.endpoint = this.endpoint;
+					if(!this.connection.scp)
+						this.connection.scp = new Secretarium.SCP();
+					else if(this.connection.retrying) { // retrying
+						clearTimeout(this.connection.timer);
+						this.connection.retryingMsg = "Secure connection lost - retrying now";
+						if(!this.connection.timerElapsed) this.connection.retryFailures = 0;
+					}
+
+					return new Promise((resolve, reject) => {
+						this.connection.connecting = true;
+						if (this.connection.scp.state < 2) {
+							resolve(); // already connected
+							return;
+						}
+
+						this.connection.scp.reset()
+							.onStatechange(x => {
+								if(x == 2) // connection dropped
+									this.retryConnection();
+								if(this.connection) this.connection.lastState = x;
+							})
+							.connect(this.connection.endpoint, this.store.user.key, Secretarium.Utils.toBytes(this.trustedKey, true))
+							.then(() => {
+								this.connection.retrying = false;
+								this.connection.retryingMsg = "";
+								this.connection.retryFailures = 0;
+								this.connection.connecting = false;
+								resolve();
+							})
+							.catch(e => {
+								this.connection.connecting = false;
+								reject(e);
+							});
+					});
+				},
+				disconnect() {
+					this.store.user.key = null;
+					this.connection.scp.close();
+					this.connection = null;
+				},
+				runSingle() {
+					this.nsSingle.start("Sending tx...", true);
+					try {
+						this.connection.scp
+							.newTx(this.appName, this.fctName, this.appName + "-" + this.fctName, JSON.parse(this.args))
+							.onError(x => { this.nsSingle.failed(x, true); })
+							.onAcknowledged(() => { this.nsSingle.acknowledged(); })
+							.onProposed(() => { this.nsSingle.proposed(); })
+							.onCommitted(() => { this.nsSingle.committed(); })
+							.onExecuted(() => { this.nsSingle.executed("Executed", true); })
+							.onResult(x => { this.nsSingle.executed(JSON.stringify(x), true); })
+							.send();
+					} catch (x) {
+						this.nsSingle.failed(x, true);
+					}
+				},
+				runMulti() {
+					this.nsMulti.start("Parsing txs...", true);
+					this.multiTx.splice(0, this.multiTx.length);
+					try {
+						let all = JSON.parse(this.cmdJson);
+						if(!Array.isArray(all)) {
+							this.nsMulti.failed("expecting array", true);
+							return;
+						}
+
+						let fcRunTx = (i) => {
+							try {
+								let s = { requestId: all[i].requestId, ns: new Secretarium.NotifState() };
+								this.multiTx.push(s);
+								s.ns.start("Running " + all[i].requestId + "...", true);
+								this.connection.scp
+									.newTx(all[i].dcapp, all[i].function, all[i].requestId, all[i].args)
+									.onError(x => { s.ns.failed(x, true); })
+									.onAcknowledged(() => { s.ns.acknowledged(); })
+									.onProposed(() => { s.ns.proposed(); })
+									.onCommitted(() => { s.ns.committed(); })
+									.onExecuted(() => {
+										s.ns.executed("Executed", true);
+										if(++i < all.length) fcRunTx(i);
+									})
+									.send();
+							} catch (x) {
+								this.nsMulti.failed(x, true);
+							}
+						};
+						fcRunTx(0);
+					} catch (x) {
+						this.nsMulti.failed(x, true);
+					}
+					this.nsMulti.executed().hide(0);
+				},
+				query() {
+					this.nsQuery.start("Sending query...", true);
+					try {
+						this.connection.scp
+							.newQuery(this.appName, this.fctName, this.appName + "-" + this.fctName, JSON.parse(this.args))
+							.onError(x => { this.nsQuery.failed(x, true); })
+							.onResult(x => { this.nsQuery.executed(JSON.stringify(x), true); })
+							.send();
+					} catch (x) {
+						this.nsQuery.failed(x, true);
+					}
+				},
+			}
+		}).$mount('#app');
+
+		function setOnDrop(cb) {
+			$('body').toggleClass('active', cb != null);
+			onDrop = cb;
+		}
+		$(function() {
+			$('body').on("dragover dragenter", function(e) {
+				$('body').addClass('dragging');
+			}).on("dragleave", function(e) {
+				if(e.clientX == 0 && e.clientY == 0)
+					$('body').removeClass('dragging');
+			}).on("drop", function(e) {
+				$('body').removeClass('dragging');
+				if(onDrop != null) {
+					if(e.dataTransfer && e.dataTransfer.files) onDrop(e);
+					else if(e.originalEvent.dataTransfer && e.originalEvent.dataTransfer.files) onDrop(e.originalEvent);
+				}
+			});
+			$("#app").css("opacity", 1);
+		});
+	</script>
+</body>
+
+</html>
