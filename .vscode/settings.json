@@ -1,13 +1,26 @@
 {
-    "liveSassCompile.settings.formats":[
-       {
-           "extensionName": ".min.css",
-           "format": "compressed",
-           "savePath": "/demo/styles"
-       }
-   ],
-   "liveSassCompile.settings.includeItems": [
-      "/demo/styles/demo.scss"
-   ],
-   "liveSassCompile.settings.generateMap": false
+    "eslint.autoFixOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+    },
+    "eslint.validate": [
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact"
+    ],
+    "editor.detectIndentation": false,
+    "editor.tabSize": 4,
+    "editor.formatOnSave": true,
+    "liveSassCompile.settings.formats": [
+        {
+            "extensionName": ".min.css",
+            "format": "compressed",
+            "savePath": "/demo/styles"
+        }
+    ],
+    "liveSassCompile.settings.includeItems": [
+        "/demo/styles/demo.scss"
+    ],
+    "liveSassCompile.settings.generateMap": false
 }

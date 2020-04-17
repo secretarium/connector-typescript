@@ -1,18 +1,34 @@
 {
-    "compileOnSave": true,
-    "compilerOptions": {
-        "target": "ES5",
-        "module": "commonjs",
-        "sourceMap": true,
-        "noImplicitAny": true,
-        "outDir": "./dist",
-        "lib": [
-            "ES5",
-            "ES6",
-            "DOM"
-        ]
-    },
     "include": [
-        "./src/**/*"
-    ]
+        "./src"
+    ],
+    "exclude": [
+        "**/__tests__/**"
+    ],
+    "compilerOptions": {
+        "baseUrl": ".",
+        "outDir": "./lib/",
+        "sourceMap": true,
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "lib": [
+            "esnext",
+            "dom"
+        ],
+        "target": "es5",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitUseStrict": false,
+        "noStrictGenericChecks": false,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "strict": true,
+    }
 }

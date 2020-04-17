@@ -1,0 +1,22 @@
+{
+    "public": ".",
+    "directoryListing": false,
+    "rewrites": [
+        {
+            "source": "/assets/:res",
+            "destination": "demo/:res"
+        },
+        {
+            "source": "/assets/:type/:res",
+            "destination": "demo/:type/:res"
+        },
+        {
+            "source": "lib/:res",
+            "destination": "lib/:res"
+        },
+        {
+            "source": "/",
+            "destination": "demo/index.html"
+        }
+    ]
+}
