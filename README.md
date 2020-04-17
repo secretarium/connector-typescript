@@ -1,6 +1,6 @@
-# Secretarium.Connector
-Javascript connector
+# connector-typescript
 
+Connector for API communication with Secretarium enclave clusters
 
-Requires Google Chrome on Windows 10
-Requires Safari or Chrome on Iphone/Ipad
+Requires Microsoft Edge or Google Chrome on Windows
+Requires Apple Safari or Google Chrome on iPhone/iPad
