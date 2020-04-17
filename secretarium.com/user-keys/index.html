@@ -5,7 +5,6 @@
             (function(window) {
 
                 var subscribers = {};
-                var keys = [];
 
                 window.onmessage = e => {
                     if (!window.parent || !e.data || !e.data.type)
