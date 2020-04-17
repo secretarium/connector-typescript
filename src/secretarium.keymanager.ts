@@ -16,42 +16,42 @@ namespace Secretarium {
 
     export class Key implements KeyBase {
 
-        name: string = "";
-        version: number = 0;
+        name = '';
+        version = 0;
         cryptoKey: CryptoKeyPair = null;
         publicKeyRaw: Uint8Array = null;
 
-        save: boolean = false;
-        imported: boolean = false;
-        encrypted: boolean = false;
-        isNew: boolean = false;
+        save = false;
+        imported = false;
+        encrypted = false;
+        isNew = false;
 
         exportableKey: ExportedKey = null;
-        exportUrl: string = "";
+        exportUrl = '';
         exportableKeyEncrypted: ExportedKeyEncrypted = null;
-        exportUrlEncrypted: string = "";
+        exportUrlEncrypted = '';
 
         async setCryptoKey(publicKey: CryptoKey, privateKey: CryptoKey) {
             this.cryptoKey = { publicKey: publicKey, privateKey: privateKey };
-            this.publicKeyRaw = new Uint8Array(await window.crypto.subtle.exportKey("raw", publicKey)).subarray(1);
+            this.publicKeyRaw = new Uint8Array(await window.crypto.subtle.exportKey('raw', publicKey)).subarray(1);
         }
         async setCryptoKeyFromJwk(publicKey: JsonWebKey, privateKey: JsonWebKey) {
             this.setCryptoKey(
-                await window.crypto.subtle.importKey("jwk", publicKey, { name: "ECDSA", namedCurve: "P-256" }, true, ["verify"]),
-                await window.crypto.subtle.importKey("jwk", privateKey, { name: "ECDSA", namedCurve: "P-256" }, true, ["sign"]));
+                await window.crypto.subtle.importKey('jwk', publicKey, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']),
+                await window.crypto.subtle.importKey('jwk', privateKey, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']));
         }
 
         async encrypt(pwd: string): Promise<Key> {
-            if (!this.cryptoKey) throw "Key is encrypted";
+            if (!this.cryptoKey) throw 'Key is encrypted';
 
             const salt = Secretarium.Utils.getRandomBytes(32),
                 iv = Secretarium.Utils.getRandomBytes(12),
                 weakPwd = Secretarium.Utils.encode(pwd),
                 strongPwd = await Secretarium.Utils.hash(Secretarium.Utils.concatBytes(salt, weakPwd)),
-                key = await window.crypto.subtle.importKey("raw", strongPwd, "AES-GCM", false, ["encrypt", "decrypt"]),
+                key = await window.crypto.subtle.importKey('raw', strongPwd, 'AES-GCM', false, ['encrypt', 'decrypt']),
                 json = JSON.stringify({ publicKey: this.exportableKey.publicKey, privateKey: this.exportableKey.privateKey }),
                 data = Secretarium.Utils.encode(json),
-                encrypted = new Uint8Array(await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv, tagLength: 128 }, key, data));
+                encrypted = new Uint8Array(await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, key, data));
             this.version = 1;
             this.exportableKeyEncrypted = {
                 name: this.name, version: this.version, iv: Secretarium.Utils.toBase64(iv),
@@ -62,31 +62,31 @@ namespace Secretarium {
 
         async decrypt(pwd: string): Promise<Key> {
             if (this.cryptoKey) return this;
-            if (!this.exportableKeyEncrypted) throw "Key has not been imported";
+            if (!this.exportableKeyEncrypted) throw 'Key has not been imported';
 
             let iv = Secretarium.Utils.toBytes(this.exportableKeyEncrypted.iv, true),
                 salt = Secretarium.Utils.toBytes(this.exportableKeyEncrypted.salt, true),
                 encrypted = Secretarium.Utils.toBytes(this.exportableKeyEncrypted.data, true),
                 weakpwd = Secretarium.Utils.encode(pwd),
                 strongPwd = await Secretarium.Utils.hash(Secretarium.Utils.concatBytes(salt, weakpwd)),
-                key = await window.crypto.subtle.importKey("raw", strongPwd, "AES-GCM", false, ["encrypt", "decrypt"]),
-                decrypted : Uint8Array;
+                key = await window.crypto.subtle.importKey('raw', strongPwd, 'AES-GCM', false, ['encrypt', 'decrypt']),
+                decrypted: Uint8Array;
             try {
-                decrypted = new Uint8Array(await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv, tagLength: 128 }, key, encrypted));
+                decrypted = new Uint8Array(await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, key, encrypted));
             }
             catch (e) {
-                throw "Can't decrypt/invalid password";
+                throw 'Can\'t decrypt/invalid password';
             }
 
             try {
                 if (this.version == 0) { // retro compat
-                    const publicKey = await window.crypto.subtle.importKey("raw", decrypted.subarray(0, 65), { name: "ECDSA", namedCurve: "P-256" }, true, ["verify"]);
-                    const privateKey = await window.crypto.subtle.importKey("pkcs8", decrypted.subarray(65), { name: "ECDSA", namedCurve: "P-256" }, true, ["sign"]);
+                    const publicKey = await window.crypto.subtle.importKey('raw', decrypted.subarray(0, 65), { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']);
+                    const privateKey = await window.crypto.subtle.importKey('pkcs8', decrypted.subarray(65), { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']);
                     await this.setCryptoKey(publicKey, privateKey);
                     this.exportableKey = {
                         name: this.name, version: 1,
-                        publicKey: await window.crypto.subtle.exportKey("jwk", publicKey),
-                        privateKey: await window.crypto.subtle.exportKey("jwk", privateKey)
+                        publicKey: await window.crypto.subtle.exportKey('jwk', publicKey),
+                        privateKey: await window.crypto.subtle.exportKey('jwk', privateKey)
                     };
                     await this.encrypt(pwd); // re-encrypt will migrate the encrypted exportable to the latest version
                 }
@@ -98,14 +98,14 @@ namespace Secretarium {
 
             }
             catch (e) {
-                throw "Key format is incorrect";
+                throw 'Key format is incorrect';
             }
 
             return this;
         }
 
-        getPublicKeyHex(delimiter: string = ''): string {
-            if (!this.publicKeyRaw) throw "Key is encrypted";
+        getPublicKeyHex(delimiter = ''): string {
+            if (!this.publicKeyRaw) throw 'Key is encrypted';
             return Secretarium.Utils.toHex(this.publicKeyRaw, delimiter);
         }
     }
@@ -120,7 +120,7 @@ namespace Secretarium {
 
         private addKey(key: Key) {
             // unusual logic for reactivity
-            let index = this.keys.findIndex(k => k.name == key.name);
+            const index = this.keys.findIndex(k => k.name == key.name);
             if (index < 0) this.keys.push(key);
             else this.keys.splice(index, 1, key);
             return key;
@@ -128,11 +128,11 @@ namespace Secretarium {
 
         private init() {
             window.addEventListener('message', e => {
-                if (e.origin !== "https://secretarium.com") return;
+                if (e.origin !== 'https://secretarium.com') return;
                 if (!e.data) return;
 
                 const keys = JSON.parse(e.data);
-                for (var lsKey of keys) {
+                for (const lsKey of keys) {
                     if(lsKey.encryptedKeys) { // retro-compat
                         lsKey.data = lsKey.encryptedKeys;
                     }
@@ -154,26 +154,26 @@ namespace Secretarium {
                 }
             });
 
-            const f = document.createElement("iframe");
-            f.setAttribute("src", "https://secretarium.com/user-keys/");
-            f.setAttribute("id", "secretarium-com-frame");
-            f.style.display = "none";
+            const f = document.createElement('iframe');
+            f.setAttribute('src', 'https://secretarium.com/user-keys/');
+            f.setAttribute('id', 'secretarium-com-frame');
+            f.style.display = 'none';
             f.onload = () => {
-                f.contentWindow.postMessage({ type: "get" }, "https://secretarium.com");
+                f.contentWindow.postMessage({ type: 'get' }, 'https://secretarium.com');
             };
             document.body.appendChild(f);
         }
 
-        private static createObjectURL(o: Object): string {
+        private static createObjectURL(o: Record<string, any>): string {
             const j = JSON.stringify(o, null, 4);
             const b = new Blob([j], { type: 'application/json;charset=utf-8;' });
             return URL.createObjectURL(b);
         }
 
         async createKey(name: string): Promise<Key> {
-            if (name.length == 0) throw "Invalid key name";
+            if (name.length == 0) throw 'Invalid key name';
 
-            const cryptoKey = await window.crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+            const cryptoKey = await window.crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
 
             const key = new Key();
             key.name = name;
@@ -182,8 +182,8 @@ namespace Secretarium {
             key.setCryptoKey(cryptoKey.publicKey, cryptoKey.privateKey);
             key.exportableKey = {
                 name: name, version: 1,
-                publicKey: await window.crypto.subtle.exportKey("jwk", cryptoKey.publicKey),
-                privateKey: await window.crypto.subtle.exportKey("jwk", cryptoKey.privateKey)
+                publicKey: await window.crypto.subtle.exportKey('jwk', cryptoKey.publicKey),
+                privateKey: await window.crypto.subtle.exportKey('jwk', cryptoKey.privateKey)
             };
             key.exportUrl = KeysManager.createObjectURL(key.exportableKey);
 
@@ -192,14 +192,14 @@ namespace Secretarium {
 
         importKeyFile(evt: any): Promise<Key> {
             return new Promise((resolve, reject) => {
-                let e = evt.dataTransfer || evt.target; // dragged or browsed
-                if (!e || !e.files) reject("Unsupported, missing key file");
-                if (e.files.length != 1) reject("Unsupported, expecting a single key file");
+                const e = evt.dataTransfer || evt.target; // dragged or browsed
+                if (!e || !e.files) reject('Unsupported, missing key file');
+                if (e.files.length != 1) reject('Unsupported, expecting a single key file');
 
-                let reader = new FileReader();
+                const reader = new FileReader();
                 reader.onloadend = async () => {
                     try {
-                        let k = JSON.parse(reader.result as string);
+                        const k = JSON.parse(reader.result as string);
                         const key = new Key();
                         key.name = k.name;
                         key.version = k.version || 0;
@@ -218,19 +218,19 @@ namespace Secretarium {
                     }
                     catch (e) { reject(e.message); }
                 };
-                reader.onerror = e => { reject("Failed to load the key file"); };
+                reader.onerror = e => { reject('Failed to load the key file'); };
                 reader.readAsText(e.files[0]);
             });
         }
 
         removeKey(key: Key): void {
-            const f = document.getElementById("secretarium-com-frame") as HTMLIFrameElement;
-            f.contentWindow.postMessage({ type: "remove", data: { name: key.name, version: key.version } }, "https://secretarium.com");
+            const f = document.getElementById('secretarium-com-frame') as HTMLIFrameElement;
+            f.contentWindow.postMessage({ type: 'remove', data: { name: key.name, version: key.version } }, 'https://secretarium.com');
         }
 
         saveKey(key: Key): void {
-            const f = document.getElementById("secretarium-com-frame") as HTMLIFrameElement;
-            f.contentWindow.postMessage({ type: "add", data: { name: key.name, version: key.version } }, "https://secretarium.com");
+            const f = document.getElementById('secretarium-com-frame') as HTMLIFrameElement;
+            f.contentWindow.postMessage({ type: 'add', data: { name: key.name, version: key.version } }, 'https://secretarium.com');
         }
     }
 }

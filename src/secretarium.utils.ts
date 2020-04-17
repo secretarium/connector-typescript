@@ -2,20 +2,20 @@ namespace Secretarium {
 
     export namespace Utils {
 
-        const decoder = new TextDecoder("utf-8");
+        const decoder = new TextDecoder('utf-8');
         const encoder = new TextEncoder();
 
         export function xor(a: Uint8Array, b: Uint8Array): Uint8Array {
             if (a.length != b.length)
-                throw "array should have the same size"
+                throw 'array should have the same size';
             return a.map((x, i) => x ^ b[i]);
         }
 
         export function incrementBy(src: Uint8Array, offset: Uint8Array): Uint8Array {
             const inc = Uint8Array.from(src), szDiff = src.length - offset.length;
 
-            for (var j = offset.length - 1; j >= 0; j--) {
-                for (var i = j + szDiff, o = offset[j]; i >= 0; i--) {
+            for (let j = offset.length - 1; j >= 0; j--) {
+                for (let i = j + szDiff, o = offset[j]; i >= 0; i--) {
                     if (inc[i] + o > 255) {
                         inc[i] = inc[i] + o - 256;
                         o = 1;
@@ -34,7 +34,7 @@ namespace Secretarium {
             if (a.length != b.length)
                 return false;
 
-            for (var i = 0; i != a.length; i++) {
+            for (let i = 0; i != a.length; i++) {
                 if (a[i] != b[i]) return false;
             }
             return true;
@@ -44,19 +44,19 @@ namespace Secretarium {
             return String.fromCharCode.apply(null, src);
         }
 
-        export function toBase64(src: Uint8Array, urlSafeMode: boolean = false): string {
+        export function toBase64(src: Uint8Array, urlSafeMode = false): string {
             const x = btoa(this.toString(src));
-            return urlSafeMode ? x.replace(/\+/g, "-").replace(/\//g, "_") : x;
+            return urlSafeMode ? x.replace(/\+/g, '-').replace(/\//g, '_') : x;
         }
 
-        const byteToHex = (new Array(256)).map(n => n.toString(16).padStart(2, "0"));
-        export function toHex(src: Uint8Array, delimiter: string = ''): string {
+        const byteToHex = (new Array(256)).map(n => n.toString(16).padStart(2, '0'));
+        export function toHex(src: Uint8Array, delimiter = ''): string {
             return src.map(n => byteToHex[n]).join(delimiter);
         }
 
-        export function toBytes(s: string, base64: boolean = false): Uint8Array {
+        export function toBytes(s: string, base64 = false): Uint8Array {
             if (base64) {
-                const x = /[-_]/.test(s) ? s.replace(/\-/g, "+").replace(/\_/g, "/") : s;
+                const x = /[-_]/.test(s) ? s.replace(/\-/g, '+').replace(/\_/g, '/') : s;
                 return new Uint8Array(atob(x).split('').map(function (c) { return c.charCodeAt(0); }));
             }
             else {
@@ -68,14 +68,14 @@ namespace Secretarium {
             }
         }
 
-        export function getRandomBytes(size: number = 32): Uint8Array {
-            let a = new Uint8Array(size);
+        export function getRandomBytes(size = 32): Uint8Array {
+            const a = new Uint8Array(size);
             window.crypto.getRandomValues(a);
             return a;
         }
 
-        export function getRandomString(size: number = 32): string {
-            let a = getRandomBytes(size);
+        export function getRandomString(size = 32): string {
+            const a = getRandomBytes(size);
             return decoder.decode(a);
         }
 
@@ -108,10 +108,10 @@ namespace Secretarium {
         }
 
         export async function hash(data: Uint8Array): Promise<Uint8Array> {
-            return new Uint8Array(await window.crypto.subtle.digest({ name: "SHA-256" }, data));
+            return new Uint8Array(await window.crypto.subtle.digest({ name: 'SHA-256' }, data));
         }
 
-        export async function hashBase64(s: string, urlSafeMode: boolean = false) {
+        export async function hashBase64(s: string, urlSafeMode = false) {
             return toBase64(await hash(encoder.encode(s)), urlSafeMode);
         }
     }

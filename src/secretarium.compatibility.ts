@@ -4,8 +4,8 @@ namespace Secretarium {
 
         static localStorage(): boolean {
             try {
-                window.localStorage.setItem("a", "a");
-                window.localStorage.removeItem("a");
+                window.localStorage.setItem('a', 'a');
+                window.localStorage.removeItem('a');
                 return true;
             } catch (e) {
                 return false;
@@ -14,9 +14,9 @@ namespace Secretarium {
 
         static async ellipticCrypto(): Promise<boolean> {
             try {
-                const key = await window.crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+                const key = await window.crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
                 /*pkcs8 is preferred but does not work on Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=1133698*/
-                await window.crypto.subtle.exportKey("jwk", key.privateKey);
+                await window.crypto.subtle.exportKey('jwk', key.privateKey);
             } catch (e) {
                 return false;
             }
@@ -27,14 +27,14 @@ namespace Secretarium {
                 const pwd = new Uint8Array(32), iv = new Uint8Array(12);
                 window.crypto.getRandomValues(pwd);
                 window.crypto.getRandomValues(iv);
-                await window.crypto.subtle.importKey("raw", pwd, "AES-GCM", false, ["encrypt", "decrypt"]);
+                await window.crypto.subtle.importKey('raw', pwd, 'AES-GCM', false, ['encrypt', 'decrypt']);
             } catch (e) {
                 return false;
             }
         }
 
         static encoding(): boolean {
-            return typeof (TextEncoder) != "undefined" && typeof (TextDecoder) != "undefined"
+            return typeof (TextEncoder) != 'undefined' && typeof (TextDecoder) != 'undefined';
         }
 
         static desktopNotifications(): boolean {

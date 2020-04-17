@@ -1,7 +1,7 @@
 namespace NNG {
 
     export enum Protocol {
-        pair1 = "pair1.sp.nanomsg.org"
+        pair1 = 'pair1.sp.nanomsg.org'
         // todo: add other ones
     }
 
@@ -43,7 +43,7 @@ namespace NNG {
 
         connect(url: string, protocol: Protocol): Ws {
             const s = new WebSocket(url, [protocol]);
-            s.binaryType = "arraybuffer";
+            s.binaryType = 'arraybuffer';
             s.onopen = this._socket && this._socket.onopen || this._handlers.onopen;
             s.onclose = this._socket && this._socket.onclose || this._handlers.onclose;
             s.onmessage = this._socket && this._socket.onmessage || this._handlers.onmessage;
@@ -72,7 +72,7 @@ namespace NNG {
         }
 
         onmessage(handler: ((ev: Uint8Array) => any) | null) {
-            this._handlers.onmessage = (e : MessageEvent) => {
+            this._handlers.onmessage = (e: MessageEvent) => {
                 let data = new Uint8Array(e.data);
                 if(this._requiresHop) data = data.subarray(4);
                 return handler(data);

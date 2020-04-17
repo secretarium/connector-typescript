@@ -25,7 +25,7 @@ namespace Secretarium {
         onError?: Array<(o: string) => any>;
         onResult?: Array<(o: object | string | void) => any>;
         failed?: boolean;
-        promise: { resolve: (o: object | string | void) => any, reject: (o: string) => any };
+        promise: { resolve: (o: object | string | void) => any; reject: (o: string) => any };
 
         constructor(resolve: (o: object | string | void) => any, reject: (o: string) => any) {
             this.promise = { resolve, reject };
@@ -54,8 +54,8 @@ namespace Secretarium {
     export enum ConnectionState {
         connecting, secure, closing, closed
     }
-    export const ConnectionStateMessage : Array<string> = [
-        "Secure Connection in Progress", "Secure Connection Established", "Secure Connection Failed", "Closed"
+    export const ConnectionStateMessage: Array<string> = [
+        'Secure Connection in Progress', 'Secure Connection Established', 'Secure Connection Failed', 'Closed'
     ];
 
     export class SCP {
@@ -92,14 +92,14 @@ namespace Secretarium {
         private async _encrypt(data: Uint8Array): Promise<Uint8Array> {
             const ivOffset = Secretarium.Utils.getRandomBytes(16);
             const iv = Secretarium.Utils.incrementBy(this._session.iv, ivOffset);
-            const encrypted = new Uint8Array(await window.crypto.subtle.encrypt({ name: "AES-CTR", counter: iv, length: 128 },
+            const encrypted = new Uint8Array(await window.crypto.subtle.encrypt({ name: 'AES-CTR', counter: iv, length: 128 },
                 this._session.cryptoKey, data));
             return Secretarium.Utils.concatBytes(ivOffset, encrypted);
         }
 
         private async _decrypt(data: Uint8Array): Promise<Uint8Array> {
             const iv = Secretarium.Utils.incrementBy(this._session.iv, data.subarray(0, 16));
-            return new Uint8Array(await window.crypto.subtle.decrypt({ name: "AES-CTR", counter: iv, length: 128 },
+            return new Uint8Array(await window.crypto.subtle.decrypt({ name: 'AES-CTR', counter: iv, length: 128 },
                 this._session.cryptoKey, data.subarray(16)));
         }
 
@@ -109,7 +109,7 @@ namespace Secretarium {
                 if (o != null && o.requestId) {
                     const x = this._requests[o.requestId];
                     if (!x) {
-                        console.debug("Unexpected notification: " + json);
+                        console.debug('Unexpected notification: ' + json);
                         return;
                     }
                     if (o.error) {
@@ -126,15 +126,15 @@ namespace Secretarium {
                             return;
                         const z = x as TransactionNotificationHandlers;
                         switch (o.state.toLowerCase()) {
-                            case "acknowledged": z.onAcknowledged?.forEach(cb => cb()); break;
-                            case "proposed": z.onProposed?.forEach(cb => cb()); break;
-                            case "committed": z.onCommitted?.forEach(cb => cb()); break;
-                            case "executed":
+                            case 'acknowledged': z.onAcknowledged?.forEach(cb => cb()); break;
+                            case 'proposed': z.onProposed?.forEach(cb => cb()); break;
+                            case 'committed': z.onCommitted?.forEach(cb => cb()); break;
+                            case 'executed':
                                 z.onExecuted?.forEach(cb => cb());
                                 z.promise.resolve(o.result);
                                 break;
-                            case "failed":
-                                z.onError?.forEach(cb => cb("Transaction failed"));
+                            case 'failed':
+                                z.onError?.forEach(cb => cb('Transaction failed'));
                                 z.failed = true;
                                 z.promise.reject(o.error);
                                 break;
@@ -144,7 +144,7 @@ namespace Secretarium {
                 }
             }
             catch (e) {
-                let m = "Error '" + e.message + "' when received '" + json + "'";
+                const m = 'Error \'' + e.message + '\' when received \'' + json + '\'';
                 if (this._onError)
                     this._onError(m);
                 else
@@ -180,102 +180,102 @@ namespace Secretarium {
                         .onclose(reject)
                         .connect(url, protocol);
                 })
-                .then(async () => {
-                    socket.onopen(null)
-                        .onerror(e => { this._updateState(ConnectionState.closed); })
-                        .onclose(e => { this._updateState(ConnectionState.closed); });
+                    .then(async () => {
+                        socket.onopen(null)
+                            .onerror(e => { this._updateState(ConnectionState.closed); })
+                            .onclose(e => { this._updateState(ConnectionState.closed); });
 
-                    session.ecdh = await window.crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
-                    session.ecdhPubKeyRaw = new Uint8Array(await window.crypto.subtle.exportKey("raw", session.ecdh.publicKey)).subarray(1);
-                    return new Promise((resolve, reject) => {
-                        const tId = setTimeout(() => { reject('timeout after client hello'); }, 3000);
-                        socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(session.ecdhPubKeyRaw);
-                    });
-                })
-                .then((serverHello: Uint8Array) => {
-                    const pow = this._computeProofOfWork(serverHello.subarray(0, 32));
-                    const clientProofOfWork = Secretarium.Utils.concatBytesArrays([pow, knownTrustedKey]);
-                    return new Promise((resolve, reject) => {
-                        const tId = setTimeout(() => {reject('timeout after client proof-of-work'); }, 3000);
-                        socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(clientProofOfWork);
+                        session.ecdh = await window.crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+                        session.ecdhPubKeyRaw = new Uint8Array(await window.crypto.subtle.exportKey('raw', session.ecdh.publicKey)).subarray(1);
+                        return new Promise((resolve, reject) => {
+                            const tId = setTimeout(() => { reject('timeout after client hello'); }, 3000);
+                            socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(session.ecdhPubKeyRaw);
+                        });
                     })
-                })
-                .then(async (serverIdentity: Uint8Array) => {
-                    const preMasterSecret = serverIdentity.subarray(0, 32);
-                    const serverEcdhPubKey = await window.crypto.subtle.importKey("raw",
-                        Secretarium.Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), serverIdentity.subarray(32, 96)),
-                        { name: "ECDH", namedCurve: "P-256" }, false, []);
-                    session.serverEcdsaPubKey = await window.crypto.subtle.importKey("raw",
-                        Secretarium.Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), serverIdentity.subarray(serverIdentity.length - 64)),
-                        { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"]);
+                    .then((serverHello: Uint8Array) => {
+                        const pow = this._computeProofOfWork(serverHello.subarray(0, 32));
+                        const clientProofOfWork = Secretarium.Utils.concatBytesArrays([pow, knownTrustedKey]);
+                        return new Promise((resolve, reject) => {
+                            const tId = setTimeout(() => {reject('timeout after client proof-of-work'); }, 3000);
+                            socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(clientProofOfWork);
+                        });
+                    })
+                    .then(async (serverIdentity: Uint8Array) => {
+                        const preMasterSecret = serverIdentity.subarray(0, 32);
+                        const serverEcdhPubKey = await window.crypto.subtle.importKey('raw',
+                            Secretarium.Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), serverIdentity.subarray(32, 96)),
+                            { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+                        session.serverEcdsaPubKey = await window.crypto.subtle.importKey('raw',
+                            Secretarium.Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), serverIdentity.subarray(serverIdentity.length - 64)),
+                            { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
 
-                    // Check inheritance from Secretarium knownTrustedKey
-                    const knownTrustedKeyPath = serverIdentity.subarray(96);
-                    if (knownTrustedKeyPath.length == 64) {
-                        if (!Secretarium.Utils.sequenceEqual(knownTrustedKey, knownTrustedKeyPath))
-                            throw "Invalid server identity";
-                    }
-                    else {
-                        for (var i = 0; i < knownTrustedKeyPath.length - 64; i = i + 128) {
-                            const key = knownTrustedKeyPath.subarray(i, 64);
-                            const proof = knownTrustedKeyPath.subarray(i + 64, 64);
-                            const keyChild = knownTrustedKeyPath.subarray(i + 128, 64);
-                            const ecdsaKey = await window.crypto.subtle.importKey("raw",
-                                Secretarium.Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), key),
-                                { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"]);
-                            if (!await window.crypto.subtle.verify({ name: "ECDSA", hash: { name: "SHA-256" } }, ecdsaKey, proof, keyChild))
-                                throw "Invalid server identity chain at #" + i;
+                        // Check inheritance from Secretarium knownTrustedKey
+                        const knownTrustedKeyPath = serverIdentity.subarray(96);
+                        if (knownTrustedKeyPath.length == 64) {
+                            if (!Secretarium.Utils.sequenceEqual(knownTrustedKey, knownTrustedKeyPath))
+                                throw 'Invalid server identity';
                         }
-                    }
+                        else {
+                            for (let i = 0; i < knownTrustedKeyPath.length - 64; i = i + 128) {
+                                const key = knownTrustedKeyPath.subarray(i, 64);
+                                const proof = knownTrustedKeyPath.subarray(i + 64, 64);
+                                const keyChild = knownTrustedKeyPath.subarray(i + 128, 64);
+                                const ecdsaKey = await window.crypto.subtle.importKey('raw',
+                                    Secretarium.Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), key),
+                                    { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+                                if (!await window.crypto.subtle.verify({ name: 'ECDSA', hash: { name: 'SHA-256' } }, ecdsaKey, proof, keyChild))
+                                    throw 'Invalid server identity chain at #' + i;
+                            }
+                        }
 
-                    const commonSecret = await window.crypto.subtle.deriveBits(
-                        { name: "ECDH", public: serverEcdhPubKey }, session.ecdh.privateKey, 256);
-                    const sha256Common = new Uint8Array(await window.crypto.subtle.digest({ name: "SHA-256" }, commonSecret));
-                    const symmetricKey = Secretarium.Utils.xor(preMasterSecret, sha256Common);
-                    const key = symmetricKey.subarray(0, 16);
-                    session.key = key;
-                    session.iv = symmetricKey.subarray(16);
-                    session.cryptoKey = await window.crypto.subtle.importKey("raw", key, "AES-CTR", false, ["encrypt", "decrypt"]);
+                        const commonSecret = await window.crypto.subtle.deriveBits(
+                            { name: 'ECDH', public: serverEcdhPubKey }, session.ecdh.privateKey, 256);
+                        const sha256Common = new Uint8Array(await window.crypto.subtle.digest({ name: 'SHA-256' }, commonSecret));
+                        const symmetricKey = Secretarium.Utils.xor(preMasterSecret, sha256Common);
+                        const key = symmetricKey.subarray(0, 16);
+                        session.key = key;
+                        session.iv = symmetricKey.subarray(16);
+                        session.cryptoKey = await window.crypto.subtle.importKey('raw', key, 'AES-CTR', false, ['encrypt', 'decrypt']);
 
-                    const nonce = Secretarium.Utils.getRandomBytes(32);
-                    const signedNonce = new Uint8Array(await window.crypto.subtle.sign(
-                        { name: "ECDSA", hash: { name: "SHA-256" } }, userKey.cryptoKey.privateKey, nonce));
-                    const clientProofOfIdentity = Secretarium.Utils.concatBytesArrays(
-                        [nonce, session.ecdhPubKeyRaw, userKey.publicKeyRaw, signedNonce]);
+                        const nonce = Secretarium.Utils.getRandomBytes(32);
+                        const signedNonce = new Uint8Array(await window.crypto.subtle.sign(
+                            { name: 'ECDSA', hash: { name: 'SHA-256' } }, userKey.cryptoKey.privateKey, nonce));
+                        const clientProofOfIdentity = Secretarium.Utils.concatBytesArrays(
+                            [nonce, session.ecdhPubKeyRaw, userKey.publicKeyRaw, signedNonce]);
 
-                    const encryptedClientProofOfIdentity = await this._encrypt(clientProofOfIdentity);
-                    return new Promise((resolve, reject) => {
-                        const tId = setTimeout(() => { reject('timeout after client proof-of-identity'); }, 3000);
-                        socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(encryptedClientProofOfIdentity);
+                        const encryptedClientProofOfIdentity = await this._encrypt(clientProofOfIdentity);
+                        return new Promise((resolve, reject) => {
+                            const tId = setTimeout(() => { reject('timeout after client proof-of-identity'); }, 3000);
+                            socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(encryptedClientProofOfIdentity);
+                        });
                     })
-                })
-                .then(async (serverProofOfIdentityEncrypted: Uint8Array) => {
-                    const serverProofOfIdentity = await this._decrypt(serverProofOfIdentityEncrypted);
-                    const welcome = Secretarium.Utils.encode("Hey you! Welcome to Secretarium!");
-                    const toVerify = Secretarium.Utils.concatBytes(serverProofOfIdentity.subarray(0, 32), welcome);
-                    const serverSignedHash = serverProofOfIdentity.subarray(32, 96);
-                    const check = await window.crypto.subtle.verify({ name: "ECDSA", hash: { name: "SHA-256" } },
-                        session.serverEcdsaPubKey, serverSignedHash, toVerify);
-                    if (!check)
-                        throw "Invalid server proof of identity";
+                    .then(async (serverProofOfIdentityEncrypted: Uint8Array) => {
+                        const serverProofOfIdentity = await this._decrypt(serverProofOfIdentityEncrypted);
+                        const welcome = Secretarium.Utils.encode('Hey you! Welcome to Secretarium!');
+                        const toVerify = Secretarium.Utils.concatBytes(serverProofOfIdentity.subarray(0, 32), welcome);
+                        const serverSignedHash = serverProofOfIdentity.subarray(32, 96);
+                        const check = await window.crypto.subtle.verify({ name: 'ECDSA', hash: { name: 'SHA-256' } },
+                            session.serverEcdsaPubKey, serverSignedHash, toVerify);
+                        if (!check)
+                            throw 'Invalid server proof of identity';
 
-                    socket.onmessage(async encrypted => {
-                        const data = await this._decrypt(encrypted);
-                        const json = Secretarium.Utils.decode(data);
-                        console.debug("received:" + json);
-                        this._notify(json);
+                        socket.onmessage(async encrypted => {
+                            const data = await this._decrypt(encrypted);
+                            const json = Secretarium.Utils.decode(data);
+                            console.debug('received:' + json);
+                            this._notify(json);
+                        });
+
+                        this._updateState(1);
+                        resolve();
+                    })
+                    .catch(e => {
+                        console.error('secure connection failed', e);
+                        this._updateState(2);
+                        socket.close();
+                        this._updateState(3);
+                        reject('Unable to create the secure connection: ' + e.message);
                     });
-
-                    this._updateState(1);
-                    resolve();
-                })
-                .catch(e => {
-                    console.error("secure connection failed", e);
-                    this._updateState(2);
-                    socket.close();
-                    this._updateState(3);
-                    reject("Unable to create the secure connection: " + e.message);
-                });
             });
         }
 
@@ -320,14 +320,14 @@ namespace Secretarium {
         async send(app: string, command: string, requestId: string, args: object) {
             if (this._socket.state !== NNG.State.open) {
                 const z = this._requests[requestId]?.onError;
-                if (z) z.forEach(cb => cb("not connected"));
-                else throw "not connected";
+                if (z) z.forEach(cb => cb('not connected'));
+                else throw 'not connected';
             }
 
-            const query = JSON.stringify({ "dcapp": app, "function": command, "requestId": requestId, args: args });
+            const query = JSON.stringify({ 'dcapp': app, 'function': command, 'requestId': requestId, args: args });
             const data = Secretarium.Utils.encode(query);
             const encrypted = await this._encrypt(data);
-            console.debug("sending:" + query);
+            console.debug('sending:' + query);
 
             this._socket.send(encrypted);
         }
