@@ -5,7 +5,8 @@
     "main": "lib/secretarium.umd.js",
     "scripts": {
         "preinstall": "node ./scripts/hintYarn.js",
-        "test": "jest",
+        "test": "jest --coverage",
+        "test:mutation": "stryker run ./config/stryker.config.js",
         "build": "webpack --config ./config/webpack.config.js",
         "start": "webpack --config ./config/webpack.config.js --progress --color --watch",
         "serve": "serve",
@@ -14,9 +15,10 @@
         "release": "release-it"
     },
     "keywords": [
-        "react-native",
-        "ios",
-        "android"
+        "secretarium",
+        "communication",
+        "connector",
+        "api"
     ],
     "repository": "https://github.com/secretarium/connector-typescript",
     "author": "Florian Guitton <florian@secretarium.com> (https://github.com/fguitton)",
@@ -33,6 +35,10 @@
         "@babel/runtime": "7.9.2",
         "@commitlint/config-conventional": "8.3.4",
         "@release-it/conventional-changelog": "1.1.1",
+        "@stryker-mutator/core": "3.1.0",
+        "@stryker-mutator/javascript-mutator": "3.1.0",
+        "@stryker-mutator/typescript": "3.1.0",
+        "@stryker-mutator/jest-runner": "3.1.0",
         "@typescript-eslint/eslint-plugin": "2.28.0",
         "@typescript-eslint/parser": "2.28.0",
         "@types/jest": "25.2.1",
