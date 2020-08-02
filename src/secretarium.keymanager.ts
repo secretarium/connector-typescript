@@ -31,11 +31,11 @@ export class Key implements KeyBase {
     exportableKeyEncrypted: ExportedKeyEncrypted | null = null;
     exportUrlEncrypted = '';
 
-    async setCryptoKey(publicKey: CryptoKey, privateKey: CryptoKey) {
+    async setCryptoKey(publicKey: CryptoKey, privateKey: CryptoKey): Promise<void> {
         this.cryptoKey = { publicKey: publicKey, privateKey: privateKey };
         this.publicKeyRaw = new Uint8Array(await window.crypto.subtle.exportKey('raw', publicKey)).subarray(1);
     }
-    async setCryptoKeyFromJwk(publicKey: JsonWebKey, privateKey: JsonWebKey) {
+    async setCryptoKeyFromJwk(publicKey: JsonWebKey, privateKey: JsonWebKey): Promise<void> {
         this.setCryptoKey(
             await window.crypto.subtle.importKey('jwk', publicKey, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']),
             await window.crypto.subtle.importKey('jwk', privateKey, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']));
@@ -49,7 +49,7 @@ export class Key implements KeyBase {
             weakPwd = Utils.encode(pwd),
             strongPwd = await Utils.hash(Utils.concatBytes(salt, weakPwd)),
             key = await window.crypto.subtle.importKey('raw', strongPwd, 'AES-GCM', false, ['encrypt', 'decrypt']),
-            json = JSON.stringify({ publicKey: this.exportableKey.publicKey, privateKey: this.exportableKey.privateKey }),
+            json = JSON.stringify({ publicKey: this.exportableKey?.publicKey, privateKey: this.exportableKey?.privateKey }),
             data = Utils.encode(json),
             encrypted = new Uint8Array(await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, key, data));
         this.version = 1;
@@ -164,7 +164,7 @@ export class KeysManager {
         document.body.appendChild(f);
     }
 
-    private static createObjectURL(o: Record<string, any>): string {
+    private static createObjectURL(o: ExportedKey): string {
         const j = JSON.stringify(o, null, 4);
         const b = new Blob([j], { type: 'application/json;charset=utf-8;' });
         return URL.createObjectURL(b);
@@ -190,11 +190,13 @@ export class KeysManager {
         return this.addKey(key);
     }
 
-    importKeyFile(evt: any): Promise<Key> {
+    importKeyFile(evt: DragEvent): Promise<Key> {
         return new Promise((resolve, reject) => {
-            const e = evt.dataTransfer || evt.target; // dragged or browsed
-            if (!e || !e.files) reject('Unsupported, missing key file');
-            if (e.files.length != 1) reject('Unsupported, expecting a single key file');
+            const e = evt.dataTransfer; // dragged or browsed
+            if (!e?.files)
+                return reject('Unsupported, missing key file');
+            if (e.files.length !== 1)
+                return reject('Unsupported, expecting a single key file');
 
             const reader = new FileReader();
             reader.onloadend = async () => {
@@ -218,8 +220,8 @@ export class KeysManager {
                 }
                 catch (e) { reject(e.message); }
             };
-            reader.onerror = e => { reject('Failed to load the key file'); };
-            reader.readAsText(e.files[0]);
+            reader.onerror = () => { reject('Failed to load the key file'); };
+            reader.readAsText(e?.files[0]);
         });
     }
 

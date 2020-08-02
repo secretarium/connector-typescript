@@ -1,5 +1,6 @@
 import * as NNG from './nng.websocket';
 import * as Utils from './secretarium.utils';
+import { Key } from './secretarium.keymanager';
 
 class SCPSession {
     iv: Uint8Array;
@@ -12,43 +13,43 @@ class SCPSession {
 }
 
 class QueryHandlers<T> {
-    onError?: (handler: (error: string) => any) => T;
-    onResult?: (handler: (result: object | string | void) => any) => T;
+    onError?: (handler: (error: string) => void) => T;
+    onResult?: (handler: (result: Record<string, unknown> | string | void) => void) => T;
 }
 
 class TransactionHandlers<T> extends QueryHandlers<T> {
-    onAcknowledged?: (handler: () => any) => T;
-    onCommitted?: (handler: () => any) => T;
-    onExecuted?: (handler: () => any) => T;
+    onAcknowledged?: (handler: () => void) => T;
+    onCommitted?: (handler: () => void) => T;
+    onExecuted?: (handler: () => void) => T;
 }
 
 class QueryNotificationHandlers {
-    onError?: Array<(o: string) => any>;
-    onResult?: Array<(o: object | string | void) => any>;
+    onError?: Array<(o: string) => void>;
+    onResult?: Array<(o: Record<string, unknown> | string | void) => void>;
     failed?: boolean;
-    promise: { resolve: (o: object | string | void) => any; reject: (o: string) => any };
+    promise: { resolve: (o: Record<string, unknown> | string | void) => void; reject: (o: string) => void };
 
-    constructor(resolve: (o: object | string | void) => any, reject: (o: string) => any) {
+    constructor(resolve: (o: Record<string, unknown> | string | void) => void, reject: (o: string) => void) {
         this.promise = { resolve, reject };
     }
 }
 
 class TransactionNotificationHandlers extends QueryNotificationHandlers {
-    onAcknowledged?: Array<() => any>;
-    onCommitted?: Array<() => any>;
-    onExecuted?: Array<() => any>;
+    onAcknowledged?: Array<() => void>;
+    onCommitted?: Array<() => void>;
+    onExecuted?: Array<() => void>;
 
-    constructor(resolve: (o: object | string | void) => any, reject: (o: string) => any) {
+    constructor(resolve: (o: Record<string, unknown> | string | void) => void, reject: (o: string) => void) {
         super(resolve, reject);
     }
 }
 
 export class Query extends QueryHandlers<Query> {
-    send: () => Promise<object | string | void>;
+    send?: () => Promise<Record<string, unknown> | string | void>;
 }
 
 export class Transaction extends TransactionHandlers<Transaction> {
-    send: () => Promise<object | string | void>;
+    send?: () => Promise<Record<string, unknown> | string | void>;
 }
 
 export enum ConnectionState {
@@ -61,9 +62,9 @@ export const ConnectionStateMessage: Array<string> = [
 export class SCP {
 
     private _socket: NNG.WS | null = null;
-    private _connectionState: ConnectionState.closed;
-    private _onStateChange: (state: ConnectionState) => any | null = null;
-    private _onError?: ((err: string) => any | null) = null;
+    private _connectionState = ConnectionState.closed;
+    private _onStateChange: ((state: ConnectionState) => void) | null = null;
+    private _onError?: ((err: string) => void) | null = null;
     private _requests: { [key: string]: (QueryNotificationHandlers | TransactionNotificationHandlers) } = {};
     private _session: SCPSession | null = null;
 
@@ -71,7 +72,7 @@ export class SCP {
         this.reset();
     }
 
-    reset() {
+    reset(): SCP {
         if (this._socket && this._socket.state > NNG.State.closing)
             this._socket.close();
 
@@ -156,7 +157,7 @@ export class SCP {
     }
 
     private _computeProofOfWork(nonce: Uint8Array): Uint8Array {
-        return Utils.getRandomBytes(32); // proof-of-work verification is currently deactivated
+        return nonce; // proof-of-work verification is currently deactivated
     }
 
     get state(): ConnectionState {
@@ -167,12 +168,11 @@ export class SCP {
         return this._socket?.bufferedAmount || 0;
     }
 
-    connect(url: string, userKey: Key, knownTrustedKey: Uint8Array, protocol: NNG.Protocol = NNG.Protocol.pair1): Promise<any> {
+    connect(url: string, userKey: Key, knownTrustedKey: Uint8Array, protocol: NNG.Protocol = NNG.Protocol.pair1): Promise<void> {
         if (this._socket && this._socket.state > NNG.State.closing)
             this._socket.close();
 
         this._updateState(ConnectionState.closed);
-        const session = this._session = new SCPSession();
         const socket = this._socket = new NNG.WS();
         let ecdh: CryptoKeyPair;
         let ecdhPubKeyRaw: Uint8Array;
@@ -187,8 +187,8 @@ export class SCP {
                     .onclose(reject)
                     .connect(url, protocol);
             })
-                .then(async () => {
-                    socket.onopen(null)
+                .then(async (): Promise<Uint8Array> => {
+                    socket
                         .onerror(() => { this._updateState(ConnectionState.closed); })
                         .onclose(() => { this._updateState(ConnectionState.closed); });
 
@@ -199,7 +199,7 @@ export class SCP {
                         socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(ecdhPubKeyRaw);
                     });
                 })
-                .then((serverHello: Uint8Array) => {
+                .then((serverHello: Uint8Array): Promise<Uint8Array> => {
                     const pow = this._computeProofOfWork(serverHello.subarray(0, 32));
                     const clientProofOfWork = Utils.concatBytesArrays([pow, knownTrustedKey]);
                     return new Promise((resolve, reject) => {
@@ -207,7 +207,7 @@ export class SCP {
                         socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(clientProofOfWork);
                     });
                 })
-                .then(async (serverIdentity: Uint8Array) => {
+                .then(async (serverIdentity: Uint8Array): Promise<Uint8Array> => {
                     const preMasterSecret = serverIdentity.subarray(0, 32);
                     const serverEcdhPubKey = await window.crypto.subtle.importKey('raw',
                         Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), serverIdentity.subarray(32, 96)),
@@ -259,7 +259,7 @@ export class SCP {
                         socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(encryptedClientProofOfIdentity);
                     });
                 })
-                .then(async (serverProofOfIdentityEncrypted: Uint8Array) => {
+                .then(async (serverProofOfIdentityEncrypted: Uint8Array): Promise<void> => {
                     const serverProofOfIdentity = await this._decrypt(serverProofOfIdentityEncrypted);
                     const welcome = Utils.encode('Hey you! Welcome to Secretarium!');
                     const toVerify = Utils.concatBytes(serverProofOfIdentity.subarray(0, 32), welcome);
@@ -289,19 +289,19 @@ export class SCP {
         });
     }
 
-    onError(handler: (err: string) => any): SCP {
+    onError(handler: (err: string) => void): SCP {
         this._onError = handler;
         return this;
     }
 
-    onStatechange(handler: (state: ConnectionState) => any): SCP {
+    onStatechange(handler: (state: ConnectionState) => void): SCP {
         this._onStateChange = handler;
         return this;
     }
 
-    newQuery(app: string, command: string, requestId: string, args: object): Query {
+    newQuery(app: string, command: string, requestId: string, args: Record<string, unknown>): Query {
         let cbs: QueryNotificationHandlers;
-        const pm = new Promise<object | string | void>((resolve, reject) => {
+        const pm = new Promise<Record<string, unknown> | string | void>((resolve, reject) => {
             this._requests[requestId] = cbs = new QueryNotificationHandlers(resolve, reject);
         });
         const query = new Query();
@@ -311,9 +311,9 @@ export class SCP {
         return query;
     }
 
-    newTx(app: string, command: string, requestId: string, args: object): Transaction {
+    newTx(app: string, command: string, requestId: string, args: Record<string, unknown>): Transaction {
         let cbs: TransactionNotificationHandlers;
-        const pm = new Promise<object | string | void>((resolve, reject) => {
+        const pm = new Promise<Record<string, unknown> | string | void>((resolve, reject) => {
             this._requests[requestId] = cbs = new TransactionNotificationHandlers(resolve, reject);
         });
         const tx = new Transaction();
@@ -326,7 +326,7 @@ export class SCP {
         return tx;
     }
 
-    async send(app: string, command: string, requestId: string, args: object): Promise<void> {
+    async send(app: string, command: string, requestId: string, args: Record<string, unknown>): Promise<void> {
         if (!this._socket || !this._session || this._socket.state !== NNG.State.open) {
             const z = this._requests[requestId]?.onError;
             if (z) {

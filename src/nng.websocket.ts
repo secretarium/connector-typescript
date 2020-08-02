@@ -7,11 +7,13 @@ export enum State {
     connecting, open, closing, closed
 }
 
+type EventHandler<T = Event> = (event: T) => void;
+
 interface SocketHandlers {
-    onclose: ((ev: CloseEvent) => any) | null;
-    onerror: ((ev: Event) => any) | null;
-    onmessage: ((ev: MessageEvent) => any) | null;
-    onopen: ((ev: Event) => any) | null;
+    onclose?: EventHandler<CloseEvent>;
+    onerror?: EventHandler;
+    onmessage?: EventHandler<MessageEvent>;
+    onopen?: EventHandler;
 }
 
 export class WS {
@@ -23,7 +25,7 @@ export class WS {
     constructor() {
         this._requiresHop = false;
         this._socket = null;
-        this._handlers = { onopen: null, onclose: null, onerror: null, onmessage: null };
+        this._handlers = {};
     }
 
     get state(): State {
@@ -44,34 +46,37 @@ export class WS {
     connect(url: string, protocol: Protocol): WS {
         const s = new WebSocket(url, [protocol]);
         s.binaryType = 'arraybuffer';
-        s.onopen = this._socket && this._socket.onopen || this._handlers.onopen;
-        s.onclose = this._socket && this._socket.onclose || this._handlers.onclose;
-        s.onmessage = this._socket && this._socket.onmessage || this._handlers.onmessage;
-        s.onerror = this._socket && this._socket.onerror || this._handlers.onerror;
+        s.onopen = this._socket && this._socket.onopen || this._handlers.onopen || null;
+        s.onclose = this._socket && this._socket.onclose || this._handlers.onclose || null;
+        s.onmessage = this._socket && this._socket.onmessage || this._handlers.onmessage || null;
+        s.onerror = this._socket && this._socket.onerror || this._handlers.onerror || null;
         this._requiresHop = protocol == Protocol.pair1;
         this._socket = s;
         return this;
     }
 
-    onopen(handler: ((ev: Event) => any) | null): WS {
+    onopen(handler: EventHandler): WS {
         this._handlers.onopen = handler;
-        if (this._socket) this._socket.onopen = handler;
+        if (this._socket)
+            this._socket.onopen = handler;
         return this;
     }
 
-    onclose(handler: ((ev: CloseEvent) => any) | null): WS {
+    onclose(handler: EventHandler<CloseEvent>): WS {
         this._handlers.onclose = handler;
-        if (this._socket) this._socket.onclose = handler;
+        if (this._socket)
+            this._socket.onclose = handler;
         return this;
     }
 
-    onerror(handler: ((ev: Event) => any) | null): WS {
+    onerror(handler: EventHandler): WS {
         this._handlers.onerror = handler;
-        if (this._socket) this._socket.onerror = handler;
+        if (this._socket)
+            this._socket.onerror = handler;
         return this;
     }
 
-    onmessage(handler: ((ev: Uint8Array) => any) | null): WS {
+    onmessage(handler: EventHandler<Uint8Array>): WS {
         this._handlers.onmessage = (e: MessageEvent) => {
             let data = new Uint8Array(e.data);
             if (this._requiresHop)
@@ -84,7 +89,8 @@ export class WS {
     }
 
     send(data: Uint8Array): WS {
-        if (this._requiresHop) data = this._addHop(data);
+        if (this._requiresHop)
+            data = this._addHop(data);
         this._socket?.send(data);
         return this;
     }
