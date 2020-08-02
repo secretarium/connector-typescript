@@ -16,11 +16,13 @@ interface SocketHandlers {
 
 export class WS {
 
-    private _requiresHop?: boolean;
-    private _socket?: WebSocket;
+    private _requiresHop: boolean;
+    private _socket: WebSocket | null;
     private _handlers: SocketHandlers;
 
     constructor() {
+        this._requiresHop = false;
+        this._socket = null;
         this._handlers = { onopen: null, onclose: null, onerror: null, onmessage: null };
     }
 
@@ -72,10 +74,12 @@ export class WS {
     onmessage(handler: ((ev: Uint8Array) => any) | null): WS {
         this._handlers.onmessage = (e: MessageEvent) => {
             let data = new Uint8Array(e.data);
-            if (this._requiresHop) data = data.subarray(4);
-            return handler?.(data);
+            if (this._requiresHop)
+                data = data.subarray(4);
+            return handler && handler(data);
         };
-        if (this._socket) this._socket.onmessage = this._handlers.onmessage;
+        if (this._socket)
+            this._socket.onmessage = this._handlers.onmessage;
         return this;
     }
 

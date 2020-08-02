@@ -2,24 +2,24 @@ import * as NNG from './nng.websocket';
 import * as Utils from './secretarium.utils';
 
 class SCPSession {
-    ecdh: CryptoKeyPair;
-    ecdhPubKeyRaw: Uint8Array;
-    serverEcdsaPubKey: CryptoKey;
-    key: Uint8Array;
     iv: Uint8Array;
     cryptoKey: CryptoKey;
+
+    constructor(iv: Uint8Array, cryptoKey: CryptoKey) {
+        this.iv = iv;
+        this.cryptoKey = cryptoKey;
+    }
 }
 
 class QueryHandlers<T> {
-    onError: (handler: (error: string) => any) => T;
-    onResult: (handler: (result: object) => any) => T;
+    onError?: (handler: (error: string) => any) => T;
+    onResult?: (handler: (result: object | string | void) => any) => T;
 }
 
 class TransactionHandlers<T> extends QueryHandlers<T> {
-    onAcknowledged: (handler: () => any) => T;
-    onProposed: (handler: () => any) => T;
-    onCommitted: (handler: () => any) => T;
-    onExecuted: (handler: () => any) => T;
+    onAcknowledged?: (handler: () => any) => T;
+    onCommitted?: (handler: () => any) => T;
+    onExecuted?: (handler: () => any) => T;
 }
 
 class QueryNotificationHandlers {
@@ -35,7 +35,6 @@ class QueryNotificationHandlers {
 
 class TransactionNotificationHandlers extends QueryNotificationHandlers {
     onAcknowledged?: Array<() => any>;
-    onProposed?: Array<() => any>;
     onCommitted?: Array<() => any>;
     onExecuted?: Array<() => any>;
 
@@ -61,12 +60,12 @@ export const ConnectionStateMessage: Array<string> = [
 
 export class SCP {
 
-    private _socket: NNG.WS;
-    private _connectionState: ConnectionState;
-    private _onStateChange: (state: ConnectionState) => any;
-    private _onError: (err: string) => any;
+    private _socket: NNG.WS | null = null;
+    private _connectionState: ConnectionState.closed;
+    private _onStateChange: (state: ConnectionState) => any | null = null;
+    private _onError?: ((err: string) => any | null) = null;
     private _requests: { [key: string]: (QueryNotificationHandlers | TransactionNotificationHandlers) } = {};
-    private _session: SCPSession;
+    private _session: SCPSession | null = null;
 
     constructor() {
         this.reset();
@@ -76,9 +75,9 @@ export class SCP {
         if (this._socket && this._socket.state > NNG.State.closing)
             this._socket.close();
 
-        this._session;
-        this._onStateChange;
-        this._onError;
+        this._session = null;
+        this._onStateChange = null;
+        this._onError = null;
         this._requests = {};
         this._updateState(3);
         return this;
@@ -91,6 +90,8 @@ export class SCP {
     }
 
     private async _encrypt(data: Uint8Array): Promise<Uint8Array> {
+        if (!this._session)
+            throw 'Can\'t encrypt, SCP session is not ready';
         const ivOffset = Utils.getRandomBytes(16);
         const iv = Utils.incrementBy(this._session.iv, ivOffset);
         const encrypted = new Uint8Array(await window.crypto.subtle.encrypt({ name: 'AES-CTR', counter: iv, length: 128 },
@@ -99,6 +100,8 @@ export class SCP {
     }
 
     private async _decrypt(data: Uint8Array): Promise<Uint8Array> {
+        if (!this._session)
+            throw 'Can\'t encrypt, SCP session is not ready';
         const iv = Utils.incrementBy(this._session.iv, data.subarray(0, 16));
         return new Uint8Array(await window.crypto.subtle.decrypt({ name: 'AES-CTR', counter: iv, length: 128 },
             this._session.cryptoKey, data.subarray(16)));
@@ -128,7 +131,6 @@ export class SCP {
                     const z = x as TransactionNotificationHandlers;
                     switch (o.state.toLowerCase()) {
                         case 'acknowledged': z.onAcknowledged?.forEach(cb => cb()); break;
-                        case 'proposed': z.onProposed?.forEach(cb => cb()); break;
                         case 'committed': z.onCommitted?.forEach(cb => cb()); break;
                         case 'executed':
                             z.onExecuted?.forEach(cb => cb());
@@ -145,7 +147,7 @@ export class SCP {
             }
         }
         catch (e) {
-            const m = 'Error \'' + e.message + '\' when received \'' + json + '\'';
+            const m = `Error '${e.message}' when received '${JSON.stringify(json)}'`;
             if (this._onError)
                 this._onError(m);
             else
@@ -162,7 +164,7 @@ export class SCP {
     }
 
     get bufferedAmount(): number {
-        return this._socket?.bufferedAmount;
+        return this._socket?.bufferedAmount || 0;
     }
 
     connect(url: string, userKey: Key, knownTrustedKey: Uint8Array, protocol: NNG.Protocol = NNG.Protocol.pair1): Promise<any> {
@@ -172,6 +174,10 @@ export class SCP {
         this._updateState(ConnectionState.closed);
         const session = this._session = new SCPSession();
         const socket = this._socket = new NNG.WS();
+        let ecdh: CryptoKeyPair;
+        let ecdhPubKeyRaw: Uint8Array;
+        let serverEcdsaPubKey: CryptoKey;
+
 
         return new Promise((resolve, reject) => {
             new Promise((resolve, reject) => {
@@ -183,14 +189,14 @@ export class SCP {
             })
                 .then(async () => {
                     socket.onopen(null)
-                        .onerror(e => { this._updateState(ConnectionState.closed); })
-                        .onclose(e => { this._updateState(ConnectionState.closed); });
+                        .onerror(() => { this._updateState(ConnectionState.closed); })
+                        .onclose(() => { this._updateState(ConnectionState.closed); });
 
-                    session.ecdh = await window.crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
-                    session.ecdhPubKeyRaw = new Uint8Array(await window.crypto.subtle.exportKey('raw', session.ecdh.publicKey)).subarray(1);
+                    ecdh = await window.crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+                    ecdhPubKeyRaw = new Uint8Array(await window.crypto.subtle.exportKey('raw', ecdh.publicKey)).subarray(1);
                     return new Promise((resolve, reject) => {
                         const tId = setTimeout(() => { reject('timeout after client hello'); }, 3000);
-                        socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(session.ecdhPubKeyRaw);
+                        socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(ecdhPubKeyRaw);
                     });
                 })
                 .then((serverHello: Uint8Array) => {
@@ -206,7 +212,7 @@ export class SCP {
                     const serverEcdhPubKey = await window.crypto.subtle.importKey('raw',
                         Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), serverIdentity.subarray(32, 96)),
                         { name: 'ECDH', namedCurve: 'P-256' }, false, []);
-                    session.serverEcdsaPubKey = await window.crypto.subtle.importKey('raw',
+                    serverEcdsaPubKey = await window.crypto.subtle.importKey('raw',
                         Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), serverIdentity.subarray(serverIdentity.length - 64)),
                         { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
 
@@ -230,19 +236,22 @@ export class SCP {
                     }
 
                     const commonSecret = await window.crypto.subtle.deriveBits(
-                        { name: 'ECDH', public: serverEcdhPubKey }, session.ecdh.privateKey, 256);
+                        { name: 'ECDH', public: serverEcdhPubKey }, ecdh.privateKey, 256);
                     const sha256Common = new Uint8Array(await window.crypto.subtle.digest({ name: 'SHA-256' }, commonSecret));
                     const symmetricKey = Utils.xor(preMasterSecret, sha256Common);
+                    const iv = symmetricKey.subarray(16);
                     const key = symmetricKey.subarray(0, 16);
-                    session.key = key;
-                    session.iv = symmetricKey.subarray(16);
-                    session.cryptoKey = await window.crypto.subtle.importKey('raw', key, 'AES-CTR', false, ['encrypt', 'decrypt']);
+                    const cryptoKey = await window.crypto.subtle.importKey('raw', key, 'AES-CTR', false, ['encrypt', 'decrypt']);
+                    this._session = new SCPSession(iv, cryptoKey);
+
+                    if (!userKey || !userKey.cryptoKey || !userKey.publicKeyRaw)
+                        throw 'invalid user key';
 
                     const nonce = Utils.getRandomBytes(32);
                     const signedNonce = new Uint8Array(await window.crypto.subtle.sign(
                         { name: 'ECDSA', hash: { name: 'SHA-256' } }, userKey.cryptoKey.privateKey, nonce));
                     const clientProofOfIdentity = Utils.concatBytesArrays(
-                        [nonce, session.ecdhPubKeyRaw, userKey.publicKeyRaw, signedNonce]);
+                        [nonce, ecdhPubKeyRaw, userKey.publicKeyRaw, signedNonce]);
 
                     const encryptedClientProofOfIdentity = await this._encrypt(clientProofOfIdentity);
                     return new Promise((resolve, reject) => {
@@ -256,7 +265,7 @@ export class SCP {
                     const toVerify = Utils.concatBytes(serverProofOfIdentity.subarray(0, 32), welcome);
                     const serverSignedHash = serverProofOfIdentity.subarray(32, 96);
                     const check = await window.crypto.subtle.verify({ name: 'ECDSA', hash: { name: 'SHA-256' } },
-                        session.serverEcdsaPubKey, serverSignedHash, toVerify);
+                        serverEcdsaPubKey, serverSignedHash, toVerify);
                     if (!check)
                         throw 'Invalid server proof of identity';
 
@@ -310,7 +319,6 @@ export class SCP {
         const tx = new Transaction();
         tx.onError = x => { (cbs.onError = cbs.onError || []).push(x); return tx; };
         tx.onAcknowledged = x => { (cbs.onAcknowledged = cbs.onAcknowledged || []).push(x); return tx; };
-        tx.onProposed = x => { (cbs.onProposed = cbs.onProposed || []).push(x); return tx; };
         tx.onCommitted = x => { (cbs.onCommitted = cbs.onCommitted || []).push(x); return tx; };
         tx.onExecuted = x => { (cbs.onExecuted = cbs.onExecuted || []).push(x); return tx; };
         tx.onResult = x => { (cbs.onResult = cbs.onResult || []).push(x); return tx; }; // for chained tx + query
@@ -319,9 +327,12 @@ export class SCP {
     }
 
     async send(app: string, command: string, requestId: string, args: object): Promise<void> {
-        if (this._socket.state !== NNG.State.open) {
+        if (!this._socket || !this._session || this._socket.state !== NNG.State.open) {
             const z = this._requests[requestId]?.onError;
-            if (z) z.forEach(cb => cb('not connected'));
+            if (z) {
+                z.forEach(cb => cb('not connected'));
+                return;
+            }
             else throw 'not connected';
         }
 
@@ -334,7 +345,8 @@ export class SCP {
     }
 
     close(): SCP {
-        this._socket.close();
+        if (this._socket)
+            this._socket.close();
         return this;
     }
 }

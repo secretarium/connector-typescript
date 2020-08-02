@@ -7,7 +7,7 @@ class StateConfig {
 class StateData {
     title = '';
     opacity = 0.4;
-    config?: StateConfig | Array<StateConfig>;
+    config: StateConfig | Array<StateConfig> | null = null;
 }
 
 export const NotifStatesConfig = {
@@ -71,7 +71,7 @@ export class NotifState {
     show() { this._visible = true; return this; }
     showChain() { this._showChain = true; return this; }
     hide(waitMs = 5000) {
-        if (waitMs > 0) this._timeout = setTimeout(() => { this._visible = false; }, waitMs);
+        if (waitMs > 0) this._timeout = window.setTimeout(() => { this._visible = false; }, waitMs);
         else this._visible = false;
         return this;
     }

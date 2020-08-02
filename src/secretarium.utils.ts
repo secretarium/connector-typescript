@@ -41,7 +41,7 @@ export function toString(src: Uint8Array): string {
 }
 
 export function toBase64(src: Uint8Array, urlSafeMode = false): string {
-    const x = btoa(this.toString(src));
+    const x = btoa(toString(src));
     return urlSafeMode ? x.replace(/\+/g, '-').replace(/\//g, '_') : x;
 }
 

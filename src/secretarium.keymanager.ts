@@ -5,8 +5,8 @@ export interface KeyBase {
     version: number;
 }
 export interface ExportedKey extends KeyBase {
-    publicKey: JsonWebKey;
-    privateKey: JsonWebKey;
+    publicKey: JsonWebKey; // need to use raw (pkcs8) as soon as firefox fixes bug 1133698
+    privateKey: JsonWebKey; // need to use raw (pkcs8) as soon as firefox fixes bug 1133698
 }
 export interface ExportedKeyEncrypted extends KeyBase {
     iv: string;
@@ -18,17 +18,17 @@ export class Key implements KeyBase {
 
     name = '';
     version = 0;
-    cryptoKey: CryptoKeyPair;
-    publicKeyRaw: Uint8Array;
+    cryptoKey: CryptoKeyPair | null = null;
+    publicKeyRaw: Uint8Array | null = null;
 
     save = false;
     imported = false;
     encrypted = false;
     isNew = false;
 
-    exportableKey: ExportedKey;
+    exportableKey: ExportedKey | null = null;
     exportUrl = '';
-    exportableKeyEncrypted: ExportedKeyEncrypted;
+    exportableKeyEncrypted: ExportedKeyEncrypted | null = null;
     exportUrlEncrypted = '';
 
     async setCryptoKey(publicKey: CryptoKey, privateKey: CryptoKey) {
@@ -214,7 +214,7 @@ export class KeysManager {
                         key.exportUrlEncrypted = KeysManager.createObjectURL(k);
                         key.encrypted = true;
                     }
-                    resolve(key);
+                    resolve(this.addKey(key));
                 }
                 catch (e) { reject(e.message); }
             };
@@ -225,11 +225,13 @@ export class KeysManager {
 
     removeKey(key: Key): void {
         const f = document.getElementById('secretarium-com-frame') as HTMLIFrameElement;
-        f.contentWindow?.postMessage({ type: 'remove', data: { name: key.name, version: key.version } }, 'https://secretarium.com');
+        f?.contentWindow?.postMessage({ type: 'remove', key: { name: key.name, version: key.version } }, 'https://secretarium.com');
     }
 
     saveKey(key: Key): void {
+        if (!key.exportableKeyEncrypted)
+            throw 'cant save, key must be encrypted';
         const f = document.getElementById('secretarium-com-frame') as HTMLIFrameElement;
-        f.contentWindow?.postMessage({ type: 'add', data: { name: key.name, version: key.version } }, 'https://secretarium.com');
+        f?.contentWindow?.postMessage({ type: 'add', key: key.exportableKeyEncrypted }, 'https://secretarium.com');
     }
 }

@@ -16,11 +16,11 @@
         {
             "extensionName": ".min.css",
             "format": "compressed",
-            "savePath": "/demo/styles"
+            "savePath": "/assets/styles"
         }
     ],
     "liveSassCompile.settings.includeItems": [
-        "/demo/styles/demo.scss"
+        "/assets/styles/demo.scss"
     ],
     "liveSassCompile.settings.generateMap": false
 }
