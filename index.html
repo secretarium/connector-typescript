@@ -252,9 +252,8 @@
                     if (this.createKeyPwd.length < 4) { this.nsCreateKey.failed("invalid password", true); return; }
                     try {
                         let key = await store.keysManager.createKey(this.createKeyName);
-                        key = await store.keysManager.encryptKey(key, this.createKeyPwd);
-                        key.save = true;
-                        store.keysManager.save();
+                        key = await key.encrypt(this.createKeyPwd);
+                        store.keysManager.saveKey(key);
                         this.$root.setKey(key);
                         this.nsCreateKey.executed("Success", true).hide();
                     }

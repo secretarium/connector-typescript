@@ -41,11 +41,11 @@ namespace Secretarium {
         }
 
         export function toString(src: Uint8Array): string {
-            return String.fromCharCode.apply(null, src);
+            return String.fromCharCode.apply(null, Array.from(src));
         }
 
         export function toBase64(src: Uint8Array, urlSafeMode: boolean = false): string {
-            const x = btoa(this.toString(src));
+            const x = btoa(toString(src));
             return urlSafeMode ? x.replace(/\+/g, "-").replace(/\//g, "_") : x;
         }
 
@@ -91,7 +91,7 @@ namespace Secretarium {
             for (let i = 0; i < arrays.length; i++) {
                 length += arrays[i].length;
             }
-            let c = new Uint8Array(length), j;
+            let c = new Uint8Array(length);
             for (let i = 0, j = 0; i < arrays.length; i++) {
                 c.set(arrays[i], j);
                 j += arrays[i].length;

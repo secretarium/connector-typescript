@@ -19,19 +19,21 @@ namespace NNG {
     export class Ws {
 
         private _requiresHop: boolean;
-        private _socket: WebSocket;
+        private _socket: WebSocket | null;
         private _handlers: SocketHandlers;
 
         constructor() {
+            this._requiresHop = false;
+            this._socket = null;
             this._handlers = { onopen: null, onclose: null, onerror: null, onmessage: null };
         }
 
         get state(): State {
-            return this._socket?.readyState;
+            return this._socket?.readyState || 3;
         }
 
         get bufferedAmount(): number {
-            return this._socket?.bufferedAmount;
+            return this._socket?.bufferedAmount || 0;
         }
 
         private _addHop(data: Uint8Array): Uint8Array {
@@ -55,40 +57,40 @@ namespace NNG {
 
         onopen(handler: ((ev: Event) => any) | null) {
             this._handlers.onopen = handler;
-            if(this._socket) this._socket.onopen = handler;
+            if (this._socket) this._socket.onopen = handler;
             return this;
         }
 
         onclose(handler: ((ev: CloseEvent) => any) | null) {
             this._handlers.onclose = handler;
-            if(this._socket) this._socket.onclose = handler;
+            if (this._socket) this._socket.onclose = handler;
             return this;
         }
 
         onerror(handler: ((ev: Event) => any) | null) {
             this._handlers.onerror = handler;
-            if(this._socket) this._socket.onerror = handler;
+            if (this._socket) this._socket.onerror = handler;
             return this;
         }
 
         onmessage(handler: ((ev: Uint8Array) => any) | null) {
-            this._handlers.onmessage = (e : MessageEvent) => {
+            this._handlers.onmessage = (e: MessageEvent) => {
                 let data = new Uint8Array(e.data);
-                if(this._requiresHop) data = data.subarray(4);
-                return handler(data);
+                if (this._requiresHop) data = data.subarray(4);
+                return handler && handler(data);
             };
-            if(this._socket) this._socket.onmessage = this._handlers.onmessage;
+            if (this._socket) this._socket.onmessage = this._handlers.onmessage;
             return this;
         }
 
         send(data: Uint8Array): Ws {
             if (this._requiresHop) data = this._addHop(data);
-            this._socket.send(data);
+            this._socket?.send(data);
             return this;
         }
 
         close(): Ws {
-            this._socket.close();
+            this._socket?.close();
             return this;
         }
     }

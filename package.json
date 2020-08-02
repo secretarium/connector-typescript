@@ -47,7 +47,6 @@
     "jest": {
         "modulePathIgnorePatterns": [
             "<rootDir>/lib/",
-            "<rootDir>/demo/",
             "<rootDir>/scripts/"
         ]
     },
