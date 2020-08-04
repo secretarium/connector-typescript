@@ -3,6 +3,7 @@
     "version": "0.0.1",
     "description": "Connector for API communication with Secretarium enclave clusters",
     "main": "lib/secretarium.umd.js",
+    "module": "src/index.ts",
     "scripts": {
         "preinstall": "node ./scripts/hintYarn.js",
         "test": "jest --coverage",
