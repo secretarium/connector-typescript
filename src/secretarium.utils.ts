@@ -1,9 +1,11 @@
+import { ErrorMessage, ErrorCodes } from './secretarium.constant';
+
 const decoder = new TextDecoder('utf-8');
 const encoder = new TextEncoder();
 
 export function xor(a: Uint8Array, b: Uint8Array): Uint8Array {
     if (a.length != b.length)
-        throw 'array should have the same size';
+        throw new Error(ErrorMessage[ErrorCodes.EXORNOTSS]);
     return a.map((x, i) => x ^ b[i]);
 }
 
