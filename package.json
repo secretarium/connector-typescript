@@ -52,7 +52,7 @@
         "eslint-plugin-import": "2.22.0",
         "eslint-plugin-jest": "23.20.0",
         "husky": "4.2.5",
-        "jest": "26.2.2",
+        "jest": "26.4.2",
         "release-it": "13.6.6",
         "serve": "11.3.2",
         "typescript": "3.9.7",
