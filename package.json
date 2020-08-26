@@ -6,7 +6,7 @@
     "module": "src/index.ts",
     "scripts": {
         "preinstall": "node ./scripts/hintYarn.js",
-        "test": "jest --coverage",
+        "test": "jest --passWithNoTests --coverage",
         "test:mutation": "stryker run ./config/stryker.config.js",
         "build": "webpack --config ./config/webpack.config.js",
         "start": "webpack --config ./config/webpack.config.js --progress --color --watch",
