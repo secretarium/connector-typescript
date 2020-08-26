@@ -26,3 +26,4 @@ jobs:
     - run: yarn test:mutation
       env:
         CI: true
+        STRYKER_DASHBOARD_API_KEY: ${{ secrets.stryker_token }}
