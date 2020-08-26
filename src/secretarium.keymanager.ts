@@ -1,4 +1,5 @@
 import * as Utils from './secretarium.utils';
+import { ErrorMessage, ErrorCodes, Secrets } from './secretarium.constant';
 
 export interface KeyBase {
     name: string;
@@ -42,7 +43,7 @@ export class Key implements KeyBase {
     }
 
     async encrypt(pwd: string): Promise<Key> {
-        if (!this.cryptoKey) throw 'Key is encrypted';
+        if (!this.cryptoKey) throw new Error(ErrorMessage[ErrorCodes.EKEYISENC]);
 
         const salt = Utils.getRandomBytes(32),
             iv = Utils.getRandomBytes(12),
@@ -75,7 +76,7 @@ export class Key implements KeyBase {
             decrypted = new Uint8Array(await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, key, encrypted));
         }
         catch (e) {
-            throw 'Can\'t decrypt/invalid password';
+            throw new Error(ErrorMessage[ErrorCodes.EINPASSWD]);
         }
 
         try {
@@ -98,14 +99,14 @@ export class Key implements KeyBase {
 
         }
         catch (e) {
-            throw 'Key format is incorrect';
+            throw new Error(ErrorMessage[ErrorCodes.EINVKFORM]);
         }
 
         return this;
     }
 
     getPublicKeyHex(delimiter = ''): string {
-        if (!this.publicKeyRaw) throw 'Key is encrypted';
+        if (!this.publicKeyRaw) throw new Error(ErrorMessage[ErrorCodes.EKEYISENC]);
         return Utils.toHex(this.publicKeyRaw, delimiter);
     }
 }
@@ -128,7 +129,7 @@ export class KeysManager {
 
     private init() {
         window.addEventListener('message', e => {
-            if (e.origin !== 'https://secretarium.com') return;
+            if (e.origin !== Secrets.SRTTDOMAIN) return;
             if (!e.data) return;
 
             const keys = JSON.parse(e.data);
@@ -155,11 +156,11 @@ export class KeysManager {
         });
 
         const f = document.createElement('iframe');
-        f.setAttribute('src', 'https://secretarium.com/user-keys/');
+        f.setAttribute('src', `${Secrets.SRTTDOMAIN}/user-keys/`);
         f.setAttribute('id', 'secretarium-com-frame');
         f.style.display = 'none';
         f.onload = () => {
-            f.contentWindow?.postMessage({ type: 'get' }, 'https://secretarium.com');
+            f.contentWindow?.postMessage({ type: 'get' }, Secrets.SRTTDOMAIN);
         };
         document.body.appendChild(f);
     }
@@ -171,7 +172,7 @@ export class KeysManager {
     }
 
     async createKey(name: string): Promise<Key> {
-        if (name.length == 0) throw 'Invalid key name';
+        if (name.length == 0) throw new Error(ErrorMessage[ErrorCodes.EINVKNAME]);
 
         const cryptoKey = await window.crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
 
@@ -194,9 +195,9 @@ export class KeysManager {
         return new Promise((resolve, reject) => {
             const e = evt.dataTransfer; // dragged or browsed
             if (!e?.files)
-                return reject('Unsupported, missing key file');
+                return reject(ErrorMessage[ErrorCodes.EUNSPKMIS]);
             if (e.files.length !== 1)
-                return reject('Unsupported, expecting a single key file');
+                return reject(ErrorMessage[ErrorCodes.EUNSPEXPS]);
 
             const reader = new FileReader();
             reader.onloadend = async () => {
@@ -220,20 +221,20 @@ export class KeysManager {
                 }
                 catch (e) { reject(e.message); }
             };
-            reader.onerror = () => { reject('Failed to load the key file'); };
+            reader.onerror = () => { reject(ErrorMessage[ErrorCodes.EKEYLDFAI]); };
             reader.readAsText(e?.files[0]);
         });
     }
 
     removeKey(key: Key): void {
         const f = document.getElementById('secretarium-com-frame') as HTMLIFrameElement;
-        f?.contentWindow?.postMessage({ type: 'remove', key: { name: key.name, version: key.version } }, 'https://secretarium.com');
+        f?.contentWindow?.postMessage({ type: 'remove', key: { name: key.name, version: key.version } }, Secrets.SRTTDOMAIN);
     }
 
     saveKey(key: Key): void {
         if (!key.exportableKeyEncrypted)
-            throw 'cant save, key must be encrypted';
+            throw new Error(ErrorMessage[ErrorCodes.EKEYNOTEC]);
         const f = document.getElementById('secretarium-com-frame') as HTMLIFrameElement;
-        f?.contentWindow?.postMessage({ type: 'add', key: key.exportableKeyEncrypted }, 'https://secretarium.com');
+        f?.contentWindow?.postMessage({ type: 'add', key: key.exportableKeyEncrypted }, Secrets.SRTTDOMAIN);
     }
 }

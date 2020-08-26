@@ -1,0 +1,10 @@
+# .gitattributes
+* text=auto
+* text eol=lf
+*.png binary
+*.jpg binary
+
+# GitHub Linguist Override
+*.js linguist-vendored
+config/* linguist-vendored
+scripts/* linguist-vendored

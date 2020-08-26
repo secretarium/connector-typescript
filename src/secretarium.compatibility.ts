@@ -13,7 +13,7 @@ export class Compatibility {
     static async ellipticCrypto(): Promise<JsonWebKey | boolean> {
         try {
             const key = await window.crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
-            /*pkcs8 is preferred but does not work on Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=1133698*/
+            /*pkcs8 is preferred but does not work on Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=1133698 */
             return await window.crypto.subtle.exportKey('jwk', key.privateKey);
         } catch (e) {
             return false;
@@ -29,10 +29,6 @@ export class Compatibility {
         } catch (e) {
             return false;
         }
-    }
-
-    static encoding(): boolean {
-        return typeof (TextEncoder) != 'undefined' && typeof (TextDecoder) != 'undefined';
     }
 
     static desktopNotifications(): boolean {

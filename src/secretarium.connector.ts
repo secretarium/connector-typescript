@@ -1,6 +1,7 @@
 import * as NNG from './nng.websocket';
 import * as Utils from './secretarium.utils';
 import { Key } from './secretarium.keymanager';
+import { ErrorCodes, Secrets, ConnectionState, ErrorMessage } from './secretarium.constant';
 
 class SCPSession {
     iv: Uint8Array;
@@ -52,13 +53,6 @@ export class Transaction extends TransactionHandlers<Transaction> {
     send?: () => Promise<Record<string, unknown> | string | void>;
 }
 
-export enum ConnectionState {
-    connecting, secure, closing, closed
-}
-export const ConnectionStateMessage: Array<string> = [
-    'Secure Connection in Progress', 'Secure Connection Established', 'Secure Connection Failed', 'Closed'
-];
-
 export class SCP {
 
     private _socket: NNG.WS | null = null;
@@ -92,7 +86,7 @@ export class SCP {
 
     private async _encrypt(data: Uint8Array): Promise<Uint8Array> {
         if (!this._session)
-            throw 'Can\'t encrypt, SCP session is not ready';
+            throw new Error(ErrorMessage[ErrorCodes.ESCPNOTRD]);
         const ivOffset = Utils.getRandomBytes(16);
         const iv = Utils.incrementBy(this._session.iv, ivOffset);
         const encrypted = new Uint8Array(await window.crypto.subtle.encrypt({ name: 'AES-CTR', counter: iv, length: 128 },
@@ -102,7 +96,7 @@ export class SCP {
 
     private async _decrypt(data: Uint8Array): Promise<Uint8Array> {
         if (!this._session)
-            throw 'Can\'t encrypt, SCP session is not ready';
+            throw ErrorCodes.ESCPNOTRD;
         const iv = Utils.incrementBy(this._session.iv, data.subarray(0, 16));
         return new Uint8Array(await window.crypto.subtle.decrypt({ name: 'AES-CTR', counter: iv, length: 128 },
             this._session.cryptoKey, data.subarray(16)));
@@ -138,7 +132,7 @@ export class SCP {
                             z.promise.resolve(o.result);
                             break;
                         case 'failed':
-                            z.onError?.forEach(cb => cb('Transaction failed'));
+                            z.onError?.forEach(cb => cb(ErrorMessage[ErrorCodes.ETRANSFIL]));
                             z.failed = true;
                             z.promise.reject(o.error);
                             break;
@@ -195,7 +189,7 @@ export class SCP {
                     ecdh = await window.crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
                     ecdhPubKeyRaw = new Uint8Array(await window.crypto.subtle.exportKey('raw', ecdh.publicKey)).subarray(1);
                     return new Promise((resolve, reject) => {
-                        const tId = setTimeout(() => { reject('timeout after client hello'); }, 3000);
+                        const tId = setTimeout(() => { reject(ErrorCodes.ETIMOCHEL); }, 3000);
                         socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(ecdhPubKeyRaw);
                     });
                 })
@@ -203,7 +197,7 @@ export class SCP {
                     const pow = this._computeProofOfWork(serverHello.subarray(0, 32));
                     const clientProofOfWork = Utils.concatBytesArrays([pow, knownTrustedKey]);
                     return new Promise((resolve, reject) => {
-                        const tId = setTimeout(() => { reject('timeout after client proof-of-work'); }, 3000);
+                        const tId = setTimeout(() => { reject(ErrorCodes.ETIMOCPOW); }, 3000);
                         socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(clientProofOfWork);
                     });
                 })
@@ -220,7 +214,7 @@ export class SCP {
                     const knownTrustedKeyPath = serverIdentity.subarray(96);
                     if (knownTrustedKeyPath.length == 64) {
                         if (!Utils.sequenceEqual(knownTrustedKey, knownTrustedKeyPath))
-                            throw 'Invalid server identity';
+                            throw new Error(ErrorMessage[ErrorCodes.ETINSRVID]);
                     }
                     else {
                         for (let i = 0; i < knownTrustedKeyPath.length - 64; i = i + 128) {
@@ -231,7 +225,7 @@ export class SCP {
                                 Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), key),
                                 { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
                             if (!await window.crypto.subtle.verify({ name: 'ECDSA', hash: { name: 'SHA-256' } }, ecdsaKey, proof, keyChild))
-                                throw 'Invalid server identity chain at #' + i;
+                                throw new Error(`${ErrorCodes.ETINSRVIC}${i}`);
                         }
                     }
 
@@ -245,7 +239,7 @@ export class SCP {
                     this._session = new SCPSession(iv, cryptoKey);
 
                     if (!userKey || !userKey.cryptoKey || !userKey.publicKeyRaw)
-                        throw 'invalid user key';
+                        throw new Error(ErrorMessage[ErrorCodes.ETINUSRKY]);
 
                     const nonce = Utils.getRandomBytes(32);
                     const signedNonce = new Uint8Array(await window.crypto.subtle.sign(
@@ -255,24 +249,23 @@ export class SCP {
 
                     const encryptedClientProofOfIdentity = await this._encrypt(clientProofOfIdentity);
                     return new Promise((resolve, reject) => {
-                        const tId = setTimeout(() => { reject('timeout after client proof-of-identity'); }, 3000);
+                        const tId = setTimeout(() => { reject(ErrorCodes.ETIMOCPOI); }, 3000);
                         socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(encryptedClientProofOfIdentity);
                     });
                 })
                 .then(async (serverProofOfIdentityEncrypted: Uint8Array): Promise<void> => {
                     const serverProofOfIdentity = await this._decrypt(serverProofOfIdentityEncrypted);
-                    const welcome = Utils.encode('Hey you! Welcome to Secretarium!');
+                    const welcome = Utils.encode(Secrets.SRTWELCOME);
                     const toVerify = Utils.concatBytes(serverProofOfIdentity.subarray(0, 32), welcome);
                     const serverSignedHash = serverProofOfIdentity.subarray(32, 96);
                     const check = await window.crypto.subtle.verify({ name: 'ECDSA', hash: { name: 'SHA-256' } },
                         serverEcdsaPubKey, serverSignedHash, toVerify);
                     if (!check)
-                        throw 'Invalid server proof of identity';
+                        throw new Error(ErrorMessage[ErrorCodes.ETINSRVPI]);
 
                     socket.onmessage(async encrypted => {
                         const data = await this._decrypt(encrypted);
                         const json = Utils.decode(data);
-                        console.debug('received:' + json);
                         this._notify(json);
                     });
 
@@ -280,11 +273,10 @@ export class SCP {
                     resolve();
                 })
                 .catch((e: Error) => {
-                    console.error('secure connection failed', e);
                     this._updateState(2);
                     socket.close();
                     this._updateState(3);
-                    reject('Unable to create the secure connection: ' + e.message);
+                    reject(`${ErrorCodes.EUNABLCON}${e.message}`);
                 });
         });
     }
@@ -330,17 +322,20 @@ export class SCP {
         if (!this._socket || !this._session || this._socket.state !== NNG.State.open) {
             const z = this._requests[requestId]?.onError;
             if (z) {
-                z.forEach(cb => cb('not connected'));
+                z.forEach(cb => cb(ErrorMessage[ErrorCodes.ENOTCONNT]));
                 return;
             }
-            else throw 'not connected';
+            else throw new Error(ErrorMessage[ErrorCodes.ENOTCONNT]);
         }
 
-        const query = JSON.stringify({ 'dcapp': app, 'function': command, 'requestId': requestId, args: args });
+        const query = JSON.stringify({
+            dcapp: app,
+            function: command,
+            requestId: requestId,
+            args: args
+        });
         const data = Utils.encode(query);
         const encrypted = await this._encrypt(data);
-        console.debug('sending:' + query);
-
         this._socket.send(encrypted);
     }
 
