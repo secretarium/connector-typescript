@@ -1,4 +1,4 @@
-name: Node.js Node.js Mutation Testing
+name: Node.js Mutation Testing
 
 on:
     push:
