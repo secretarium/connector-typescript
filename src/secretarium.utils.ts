@@ -39,7 +39,7 @@ export function sequenceEqual(a: Uint8Array, b: Uint8Array): boolean {
 }
 
 export function toString(src: Uint8Array): string {
-    return String.fromCharCode.apply(null, src);
+    return String.fromCharCode.apply(null, Array.from(src));
 }
 
 export function toBase64(src: Uint8Array, urlSafeMode = false): string {
