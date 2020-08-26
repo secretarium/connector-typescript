@@ -11,8 +11,8 @@
         "build": "webpack --config ./config/webpack.config.js",
         "start": "webpack --config ./config/webpack.config.js --progress --color --watch",
         "serve": "serve",
-        "lint": "eslint --ext .js,.ts,.tsx .",
-        "lint:fix": "eslint --fix --ext .js,.ts,.tsx .",
+        "lint": "eslint -c ./config/eslint.config.js --ext .js,.ts .",
+        "lint:fix": "eslint  -c ./config/eslint.config.js --fix --ext .js,.ts .",
         "release": "release-it"
     },
     "keywords": [

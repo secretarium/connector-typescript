@@ -328,7 +328,12 @@ export class SCP {
             else throw new Error(ErrorMessage[ErrorCodes.ENOTCONNT]);
         }
 
-        const query = JSON.stringify({ 'dcapp': app, 'function': command, 'requestId': requestId, args: args });
+        const query = JSON.stringify({
+            dcapp: app,
+            function: command,
+            requestId: requestId,
+            args: args
+        });
         const data = Utils.encode(query);
         const encrypted = await this._encrypt(data);
         this._socket.send(encrypted);

@@ -16,19 +16,24 @@ var defaultRules = {
     'indent': [
         'error',
         4,
-        { 'SwitchCase': 1 }
+        { SwitchCase: 1 }
     ],
     'comma-dangle': [
         'error',
         'never'
     ],
+    'no-trailing-spaces': 'error',
     'no-unused-vars': [
         'warn',
-        { 'argsIgnorePattern': '^__unused__' }
+        { argsIgnorePattern: '^__unused__' }
     ],
     'quotes': [
         'error',
         'single'
+    ],
+    'quote-props': [
+        'error',
+        'consistent-as-needed'
     ],
     'semi': [
         'error',
@@ -36,7 +41,7 @@ var defaultRules = {
     ],
     '@typescript-eslint/no-unused-vars': [
         'warn',
-        { 'argsIgnorePattern': '^__unused__' }
+        { argsIgnorePattern: '^__unused__' }
     ]
 };
 
