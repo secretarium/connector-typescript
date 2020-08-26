@@ -31,10 +31,6 @@ export class Compatibility {
         }
     }
 
-    static encoding(): boolean {
-        return typeof (TextEncoder) != 'undefined' && typeof (TextDecoder) != 'undefined';
-    }
-
     static desktopNotifications(): boolean {
         return false;
     }

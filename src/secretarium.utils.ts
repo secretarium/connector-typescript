@@ -1,8 +1,5 @@
 import { ErrorMessage, ErrorCodes } from './secretarium.constant';
 
-const decoder = new TextDecoder('utf-8');
-const encoder = new TextEncoder();
-
 export function xor(a: Uint8Array, b: Uint8Array): Uint8Array {
     if (a.length != b.length)
         throw new Error(ErrorMessage[ErrorCodes.EXORNOTSS]);
@@ -74,7 +71,7 @@ export function getRandomBytes(size = 32): Uint8Array {
 
 export function getRandomString(size = 32): string {
     const a = getRandomBytes(size);
-    return decoder.decode(a);
+    return decode(a);
 }
 
 export function concatBytes(a: Uint8Array, b: Uint8Array): Uint8Array {
@@ -97,12 +94,75 @@ export function concatBytesArrays(arrays: Array<Uint8Array>): Uint8Array {
     return c;
 }
 
-export function decode(a: Uint8Array): string {
-    return decoder.decode(a);
+export function decode(octets: Uint8Array): string {
+    let string = '';
+    let i = 0;
+    while (i < octets.length) {
+        let octet = octets[i];
+        let bytesNeeded = 0;
+        let codePoint = 0;
+        if (octet <= 0x7F) {
+            bytesNeeded = 0;
+            codePoint = octet & 0xFF;
+        } else if (octet <= 0xDF) {
+            bytesNeeded = 1;
+            codePoint = octet & 0x1F;
+        } else if (octet <= 0xEF) {
+            bytesNeeded = 2;
+            codePoint = octet & 0x0F;
+        } else if (octet <= 0xF4) {
+            bytesNeeded = 3;
+            codePoint = octet & 0x07;
+        }
+        if (octets.length - i - bytesNeeded > 0) {
+            let k = 0;
+            while (k < bytesNeeded) {
+                octet = octets[i + k + 1];
+                codePoint = (codePoint << 6) | (octet & 0x3F);
+                k += 1;
+            }
+        } else {
+            codePoint = 0xFFFD;
+            bytesNeeded = octets.length - i;
+        }
+        string += String.fromCodePoint(codePoint);
+        i += bytesNeeded + 1;
+    }
+    return string;
 }
 
 export function encode(s: string): Uint8Array {
-    return encoder.encode(s);
+    const length = s.length;
+    const octets = new Array<number>();
+    let i = 0;
+    while (i < length) {
+        const codePoint = s.codePointAt(i);
+        if (!codePoint)
+            return new Uint8Array(octets);
+        let c = 0;
+        let bits = 0;
+        if (codePoint <= 0x0000007F) {
+            c = 0;
+            bits = 0x00;
+        } else if (codePoint <= 0x000007FF) {
+            c = 6;
+            bits = 0xC0;
+        } else if (codePoint <= 0x0000FFFF) {
+            c = 12;
+            bits = 0xE0;
+        } else if (codePoint <= 0x001FFFFF) {
+            c = 18;
+            bits = 0xF0;
+        }
+        octets.push(bits | (codePoint >> c));
+        c -= 6;
+        while (c >= 0) {
+            octets.push(0x80 | ((codePoint >> c) & 0x3F));
+            c -= 6;
+        }
+        i += codePoint >= 0x10000 ? 2 : 1;
+    }
+    return new Uint8Array(octets);
 }
 
 export async function hash(data: Uint8Array): Promise<Uint8Array> {
@@ -110,5 +170,5 @@ export async function hash(data: Uint8Array): Promise<Uint8Array> {
 }
 
 export async function hashBase64(s: string, urlSafeMode = false): Promise<string> {
-    return toBase64(await hash(encoder.encode(s)), urlSafeMode);
+    return toBase64(await hash(encode(s)), urlSafeMode);
 }
