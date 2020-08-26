@@ -4,11 +4,12 @@ on: [push]
 
 jobs:
   lint:
+    name: Linting
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [13.x]
+        node-version: [14.x]
 
     steps:
     - uses: actions/checkout@v2
@@ -22,11 +23,13 @@ jobs:
         CI: true
 
   build:
+    name: Building
     runs-on: ubuntu-latest
+    needs: lint
 
     strategy:
       matrix:
-        node-version: [10.x, 12.x, 13.x]
+        node-version: [10.x, 12.x, 14.x]
 
     steps:
     - uses: actions/checkout@v2
@@ -35,8 +38,26 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: yarn install
-    - run: yarn lint
     - run: yarn build
+      env:
+        CI: true
+
+  test:
+    name: Testing
+    runs-on: ubuntu-latest
+    needs: build
+
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x, 14.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: yarn install
     - run: yarn test
       env:
         CI: true
