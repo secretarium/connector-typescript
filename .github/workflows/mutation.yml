@@ -1,7 +1,7 @@
 name: Node.js Mutation Testing
 
 on:
-    push:
+  push:
     branches:
       - master
       - test/**
