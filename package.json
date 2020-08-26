@@ -53,7 +53,7 @@
         "eslint-plugin-jest": "23.20.0",
         "husky": "4.2.5",
         "jest": "26.2.2",
-        "release-it": "13.6.6",
+        "release-it": "13.7.0",
         "serve": "11.3.2",
         "typescript": "3.9.7",
         "uglifyjs-webpack-plugin": "2.2.0",
