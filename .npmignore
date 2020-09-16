@@ -11,7 +11,7 @@ tslint.json
 
 # build scripts
 config
-scripts
+scripts/hintYarn.js
 
 # Test files
 **/*.spec.*

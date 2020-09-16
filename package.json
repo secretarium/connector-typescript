@@ -5,7 +5,7 @@
     "main": "lib/secretarium.umd.js",
     "module": "src/index.ts",
     "scripts": {
-        "preinstall": "node ./scripts/hintYarn.js",
+        "preinstall": "node ./scripts/preinstall.js",
         "test": "jest --passWithNoTests --coverage",
         "test:mutation": "stryker run ./config/stryker.config.js",
         "build": "webpack --config ./config/webpack.config.js",
