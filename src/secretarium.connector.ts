@@ -78,7 +78,7 @@ export class SCP {
         return this;
     }
 
-    private _updateState(state: ConnectionState) {
+    private _updateState(state: ConnectionState): void {
         this._connectionState = state;
         if (this._onStateChange != null)
             this._onStateChange(state);

@@ -69,11 +69,6 @@ export function getRandomBytes(size = 32): Uint8Array {
     return a;
 }
 
-export function getRandomString(size = 32): string {
-    const a = getRandomBytes(size);
-    return decode(a);
-}
-
 export function concatBytes(a: Uint8Array, b: Uint8Array): Uint8Array {
     const c = new Uint8Array(a.length + b.length);
     c.set(a, 0);
@@ -163,6 +158,11 @@ export function encode(s: string): Uint8Array {
         i += codePoint >= 0x10000 ? 2 : 1;
     }
     return new Uint8Array(octets);
+}
+
+export function getRandomString(size = 32): string {
+    const a = getRandomBytes(size);
+    return decode(a);
 }
 
 export async function hash(data: Uint8Array): Promise<Uint8Array> {
