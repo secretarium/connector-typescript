@@ -1,5 +1,7 @@
 import { ErrorMessage, ErrorCodes } from './secretarium.constant';
-import crypto from './msrcrypto';
+import msrcrypto from './msrcrypto';
+
+const crypto = window?.crypto ?? msrcrypto;
 
 export function xor(a: Uint8Array, b: Uint8Array): Uint8Array {
     if (a.length != b.length)
