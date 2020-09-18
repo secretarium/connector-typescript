@@ -29,7 +29,7 @@ export class Key {
     static async createKey(): Promise<Key> {
         const cryptoKey = await window.crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
         const key = new Key();
-        key.setCryptoKey(cryptoKey.publicKey, cryptoKey.privateKey);
+        await key.setCryptoKey(cryptoKey.publicKey, cryptoKey.privateKey);
         key.exportableKey = {
             publicKey: await window.crypto.subtle.exportKey('jwk', cryptoKey.publicKey),
             privateKey: await window.crypto.subtle.exportKey('jwk', cryptoKey.privateKey)
