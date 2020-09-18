@@ -2,9 +2,7 @@ import * as NNG from './nng.websocket';
 import * as Utils from './secretarium.utils';
 import { Key } from './secretarium.keymanager';
 import { ErrorCodes, Secrets, ConnectionState, ErrorMessage } from './secretarium.constant';
-import msrcrypto from './msrcrypto';
-
-const crypto = window?.crypto ?? msrcrypto;
+import crypto from './msrcrypto';
 
 class SCPSession {
     iv: Uint8Array;
