@@ -1,4 +1,5 @@
 import { ErrorMessage, ErrorCodes } from './secretarium.constant';
+import crypto from './msrcrypto';
 
 export function xor(a: Uint8Array, b: Uint8Array): Uint8Array {
     if (a.length != b.length)
@@ -65,7 +66,7 @@ export function toBytes(s: string, base64 = false): Uint8Array {
 
 export function getRandomBytes(size = 32): Uint8Array {
     const a = new Uint8Array(size);
-    window.crypto.getRandomValues(a);
+    crypto.getRandomValues(a);
     return a;
 }
 
@@ -166,7 +167,7 @@ export function getRandomString(size = 32): string {
 }
 
 export async function hash(data: Uint8Array): Promise<Uint8Array> {
-    return new Uint8Array(await window.crypto.subtle.digest({ name: 'SHA-256' }, data));
+    return new Uint8Array(await crypto.subtle?.digest({ name: 'SHA-256' }, data));
 }
 
 export async function hashBase64(s: string, urlSafeMode = false): Promise<string> {

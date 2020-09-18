@@ -2,6 +2,7 @@ import * as NNG from './nng.websocket';
 import * as Utils from './secretarium.utils';
 import { Key } from './secretarium.keymanager';
 import { ErrorCodes, Secrets, ConnectionState, ErrorMessage } from './secretarium.constant';
+import crypto from './msrcrypto';
 
 class SCPSession {
     iv: Uint8Array;
@@ -89,7 +90,7 @@ export class SCP {
             throw new Error(ErrorMessage[ErrorCodes.ESCPNOTRD]);
         const ivOffset = Utils.getRandomBytes(16);
         const iv = Utils.incrementBy(this._session.iv, ivOffset);
-        const encrypted = new Uint8Array(await window.crypto.subtle.encrypt({ name: 'AES-CTR', counter: iv, length: 128 },
+        const encrypted = new Uint8Array(await crypto.subtle?.encrypt({ name: 'AES-CTR', counter: iv, length: 128 },
             this._session.cryptoKey, data));
         return Utils.concatBytes(ivOffset, encrypted);
     }
@@ -98,7 +99,7 @@ export class SCP {
         if (!this._session)
             throw ErrorCodes.ESCPNOTRD;
         const iv = Utils.incrementBy(this._session.iv, data.subarray(0, 16));
-        return new Uint8Array(await window.crypto.subtle.decrypt({ name: 'AES-CTR', counter: iv, length: 128 },
+        return new Uint8Array(await crypto.subtle?.decrypt({ name: 'AES-CTR', counter: iv, length: 128 },
             this._session.cryptoKey, data.subarray(16)));
     }
 
@@ -186,8 +187,8 @@ export class SCP {
                         .onerror(() => { this._updateState(ConnectionState.closed); })
                         .onclose(() => { this._updateState(ConnectionState.closed); });
 
-                    ecdh = await window.crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
-                    ecdhPubKeyRaw = new Uint8Array(await window.crypto.subtle.exportKey('raw', ecdh.publicKey)).subarray(1);
+                    ecdh = await crypto.subtle?.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+                    ecdhPubKeyRaw = new Uint8Array(await crypto.subtle?.exportKey('raw', ecdh.publicKey)).subarray(1);
                     return new Promise((resolve, reject) => {
                         const tId = setTimeout(() => { reject(ErrorCodes.ETIMOCHEL); }, 3000);
                         socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(ecdhPubKeyRaw);
@@ -203,10 +204,10 @@ export class SCP {
                 })
                 .then(async (serverIdentity: Uint8Array): Promise<Uint8Array> => {
                     const preMasterSecret = serverIdentity.subarray(0, 32);
-                    const serverEcdhPubKey = await window.crypto.subtle.importKey('raw',
+                    const serverEcdhPubKey = await crypto.subtle?.importKey('raw',
                         Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), serverIdentity.subarray(32, 96)),
                         { name: 'ECDH', namedCurve: 'P-256' }, false, []);
-                    serverEcdsaPubKey = await window.crypto.subtle.importKey('raw',
+                    serverEcdsaPubKey = await crypto.subtle?.importKey('raw',
                         Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), serverIdentity.subarray(serverIdentity.length - 64)),
                         { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
 
@@ -221,28 +222,28 @@ export class SCP {
                             const key = knownTrustedKeyPath.subarray(i, 64);
                             const proof = knownTrustedKeyPath.subarray(i + 64, 64);
                             const keyChild = knownTrustedKeyPath.subarray(i + 128, 64);
-                            const ecdsaKey = await window.crypto.subtle.importKey('raw',
+                            const ecdsaKey = await crypto.subtle?.importKey('raw',
                                 Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), key),
                                 { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
-                            if (!await window.crypto.subtle.verify({ name: 'ECDSA', hash: { name: 'SHA-256' } }, ecdsaKey, proof, keyChild))
+                            if (!await crypto.subtle?.verify({ name: 'ECDSA', hash: { name: 'SHA-256' } }, ecdsaKey, proof, keyChild))
                                 throw new Error(`${ErrorCodes.ETINSRVIC}${i}`);
                         }
                     }
 
-                    const commonSecret = await window.crypto.subtle.deriveBits(
+                    const commonSecret = await crypto.subtle?.deriveBits(
                         { name: 'ECDH', public: serverEcdhPubKey }, ecdh.privateKey, 256);
-                    const sha256Common = new Uint8Array(await window.crypto.subtle.digest({ name: 'SHA-256' }, commonSecret));
+                    const sha256Common = new Uint8Array(await crypto.subtle?.digest({ name: 'SHA-256' }, commonSecret));
                     const symmetricKey = Utils.xor(preMasterSecret, sha256Common);
                     const iv = symmetricKey.subarray(16);
                     const key = symmetricKey.subarray(0, 16);
-                    const cryptoKey = await window.crypto.subtle.importKey('raw', key, 'AES-CTR', false, ['encrypt', 'decrypt']);
+                    const cryptoKey = await crypto.subtle?.importKey('raw', key, 'AES-CTR', false, ['encrypt', 'decrypt']);
                     this._session = new SCPSession(iv, cryptoKey);
 
                     if (!userKey || !userKey.cryptoKey || !userKey.publicKeyRaw)
                         throw new Error(ErrorMessage[ErrorCodes.ETINUSRKY]);
 
                     const nonce = Utils.getRandomBytes(32);
-                    const signedNonce = new Uint8Array(await window.crypto.subtle.sign(
+                    const signedNonce = new Uint8Array(await crypto.subtle?.sign(
                         { name: 'ECDSA', hash: { name: 'SHA-256' } }, userKey.cryptoKey.privateKey, nonce));
                     const clientProofOfIdentity = Utils.concatBytesArrays(
                         [nonce, ecdhPubKeyRaw, userKey.publicKeyRaw, signedNonce]);
@@ -258,7 +259,7 @@ export class SCP {
                     const welcome = Utils.encode(Secrets.SRTWELCOME);
                     const toVerify = Utils.concatBytes(serverProofOfIdentity.subarray(0, 32), welcome);
                     const serverSignedHash = serverProofOfIdentity.subarray(32, 96);
-                    const check = await window.crypto.subtle.verify({ name: 'ECDSA', hash: { name: 'SHA-256' } },
+                    const check = await crypto.subtle?.verify({ name: 'ECDSA', hash: { name: 'SHA-256' } },
                         serverEcdsaPubKey, serverSignedHash, toVerify);
                     if (!check)
                         throw new Error(ErrorMessage[ErrorCodes.ETINSRVPI]);

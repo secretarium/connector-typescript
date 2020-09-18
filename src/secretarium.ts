@@ -7,6 +7,10 @@ export {
 };
 
 export {
+    Key
+} from './secretarium.keymanager';
+
+export {
     Query,
     SCP,
     Transaction
