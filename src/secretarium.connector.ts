@@ -89,8 +89,8 @@ export class SCP {
         if (!this._session)
             throw new Error(ErrorMessage[ErrorCodes.ESCPNOTRD]);
         const ivOffset = Utils.getRandomBytes(16);
-        const iv = Utils.incrementBy(this._session.iv, ivOffset);
-        const encrypted = new Uint8Array(await crypto.subtle?.encrypt({ name: 'AES-CTR', counter: iv, length: 128 },
+        const iv = Utils.incrementBy(this._session.iv, ivOffset).subarray(0, 12);
+        const encrypted = new Uint8Array(await crypto.subtle?.encrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 },
             this._session.cryptoKey, data));
         return Utils.concatBytes(ivOffset, encrypted);
     }
@@ -98,8 +98,8 @@ export class SCP {
     private async _decrypt(data: Uint8Array): Promise<Uint8Array> {
         if (!this._session)
             throw ErrorCodes.ESCPNOTRD;
-        const iv = Utils.incrementBy(this._session.iv, data.subarray(0, 16));
-        return new Uint8Array(await crypto.subtle?.decrypt({ name: 'AES-CTR', counter: iv, length: 128 },
+        const iv = Utils.incrementBy(this._session.iv, data.subarray(0, 16)).subarray(0, 12);
+        return new Uint8Array(await crypto.subtle?.decrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 },
             this._session.cryptoKey, data.subarray(16)));
     }
 
@@ -236,7 +236,7 @@ export class SCP {
                     const symmetricKey = Utils.xor(preMasterSecret, sha256Common);
                     const iv = symmetricKey.subarray(16);
                     const key = symmetricKey.subarray(0, 16);
-                    const cryptoKey = await crypto.subtle?.importKey('raw', key, 'AES-CTR', false, ['encrypt', 'decrypt']);
+                    const cryptoKey = await crypto.subtle?.importKey('raw', key, 'AES-GCM', false, ['encrypt', 'decrypt']);
                     this._session = new SCPSession(iv, cryptoKey);
 
                     if (!userKey || !userKey.cryptoKey || !userKey.publicKeyRaw)
