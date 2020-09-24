@@ -34,7 +34,7 @@ var msrCryptoVersion = '1.6.1';
 
 // }(this, function (global) {
 
-const global = global || {};
+const global = {};
 
 var msrCrypto = function () {
 
@@ -4777,8 +4777,8 @@ var msrCrypto = function () {
         };
 
         msrcryptoHmac.importKey = function (p) {
-            var keyObject,
-                keyBits = p.keyData.length * 8;
+            var keyObject = {};
+            var keyBits = p.keyData.length * 8;
 
             if (p.format === 'jwk') {
                 keyObject = msrcryptoJwk.jwkToKey(p.keyData, p.algorithm, ['k']);
@@ -5392,7 +5392,7 @@ var msrCrypto = function () {
 
         msrcryptoCbc.importKey = function (p) {
 
-            var keyObject;
+            var keyObject = {};
             var keyBits = p.keyData.length * 8;
 
             if (p.format === 'jwk') {
@@ -5423,8 +5423,6 @@ var msrCrypto = function () {
         };
 
         msrcryptoCbc.exportKey = function (p) {
-
-            console.log('PLOP >>>', p);
 
             if (p.format === 'jwk') {
                 return {
@@ -5844,8 +5842,8 @@ var msrCrypto = function () {
 
         msrcryptoGcm.importKey = function (p) {
 
-            var keyObject,
-                keyBits = p.keyData.length * 8;
+            var keyObject = {};
+            var keyBits = p.keyData.length * 8;
 
             if (p.format === 'jwk') {
                 keyObject = msrcryptoJwk.jwkToKey(p.keyData, p.algorithm, ['k']);
@@ -7612,6 +7610,7 @@ var msrCrypto = function () {
 
             if (p.format === 'raw') {
 
+                var keyObject = {};
                 var keyData = p.keyData;
 
                 if (keyData[0] !== 4) {
@@ -7938,6 +7937,7 @@ var msrCrypto = function () {
 
             if (p.format === 'raw') {
 
+                var keyObject = {};
                 var keyData = p.keyData;
 
                 if (keyData[0] !== 4) {
@@ -8728,11 +8728,11 @@ var msrCrypto = function () {
 
             var parameterCollection = {
                 operationType: operationName
-            },
-                operationParameterSet,
-                expectedParam,
-                actualParam,
-                i;
+            };
+            var operationParameterSet;
+            var expectedParam;
+            var actualParam;
+            var i;
 
             if (operationName === 'importKey' && (parameterSet[0] === 'raw' || parameterSet[0] === 'spki')) {
                 operationName = 'importKeyRaw';

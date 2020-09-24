@@ -2,7 +2,7 @@ import { ErrorMessage, ErrorCodes } from './secretarium.constant';
 import crypto from './msrcrypto';
 
 export function xor(a: Uint8Array, b: Uint8Array): Uint8Array {
-    if (a.length != b.length)
+    if (a.length !== b.length)
         throw new Error(ErrorMessage[ErrorCodes.EXORNOTSS]);
     return a.map((x, i) => x ^ b[i]);
 }
@@ -27,11 +27,11 @@ export function incrementBy(src: Uint8Array, offset: Uint8Array): Uint8Array {
 }
 
 export function sequenceEqual(a: Uint8Array, b: Uint8Array): boolean {
-    if (a.length != b.length)
+    if (a.length !== b.length)
         return false;
 
-    for (let i = 0; i != a.length; i++) {
-        if (a[i] != b[i]) return false;
+    for (let i = 0; i !== a.length; i++) {
+        if (a[i] !== b[i]) return false;
     }
     return true;
 }

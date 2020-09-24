@@ -1,0 +1,26 @@
+{
+    "private": true,
+    "scripts": {
+        "tsc": "tsc",
+        "tscw": "tsc --watch",
+        "wp": "webpack",
+        "wpw": "webpack --watch",
+        "serve": "http-server build"
+    },
+    "dependencies": {
+        "react": "16.13.1",
+        "react-dom": "16.13.1"
+    },
+    "devDependencies": {
+        "@types/react": "16.9.49",
+        "@types/react-dom": "16.9.8",
+        "@types/webpack": "4.41.22",
+        "copy-webpack-plugin": "6.1.1",
+        "html-webpack-plugin": "4.5.0",
+        "http-server": "0.12.3",
+        "ts-loader": "8.0.4",
+        "typescript": "4.0.3",
+        "webpack": "4.44.2",
+        "webpack-cli": "3.3.12"
+    }
+}
