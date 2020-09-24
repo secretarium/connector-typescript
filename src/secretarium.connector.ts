@@ -168,7 +168,7 @@ export class SCP {
             this._socket.close();
 
         this._updateState(ConnectionState.closed);
-        const trustedKey = typeof knownTrustedKey === 'string' ? crypto.fromBase64(knownTrustedKey) : knownTrustedKey;
+        const trustedKey = typeof knownTrustedKey === 'string' ? Uint8Array.from(crypto.fromBase64(knownTrustedKey)) : knownTrustedKey;
         const socket = this._socket = new NNG.WS();
         let ecdh: CryptoKeyPair;
         let ecdhPubKeyRaw: Uint8Array;
@@ -177,8 +177,9 @@ export class SCP {
 
         return new Promise((resolve, reject) => {
             new Promise((resolve, reject) => {
+                const tId = setTimeout(() => { reject(ErrorMessage[ErrorCodes.ETIMOCHEL]); }, 3000);
                 socket
-                    .onopen(resolve)
+                    .onopen(x => { clearTimeout(tId); resolve(x); })
                     .onerror(reject)
                     .onclose(reject)
                     .connect(url, protocol);
