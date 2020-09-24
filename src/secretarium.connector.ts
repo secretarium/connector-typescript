@@ -232,7 +232,7 @@ export class SCP {
                     }
 
                     const commonSecret = await crypto.subtle?.deriveBits(
-                        { name: 'ECDH', public: serverEcdhPubKey }, ecdh.privateKey, 256);
+                        { name: 'ECDH', namedCurve: 'P-256', public: serverEcdhPubKey }, ecdh.privateKey, 256);
                     const sha256Common = new Uint8Array(await crypto.subtle?.digest({ name: 'SHA-256' }, commonSecret));
                     const symmetricKey = Utils.xor(preMasterSecret, sha256Common);
                     const iv = symmetricKey.subarray(16);
