@@ -40,10 +40,6 @@ class TransactionNotificationHandlers extends QueryNotificationHandlers {
     onAcknowledged?: Array<() => void>;
     onCommitted?: Array<() => void>;
     onExecuted?: Array<() => void>;
-
-    constructor(resolve: (o: Record<string, unknown> | string | void) => void, reject: (o: string) => void) {
-        super(resolve, reject);
-    }
 }
 
 export class Query extends QueryHandlers<Query> {
@@ -279,7 +275,7 @@ export class SCP {
                     this._updateState(2);
                     socket.close();
                     this._updateState(3);
-                    reject(`${ErrorMessage[ErrorCodes.EUNABLCON]}${e.message}`);
+                    reject(`${ErrorMessage[ErrorCodes.EUNABLCON]}${e.type ?? e.message ?? e.toString()}`);
                 });
         });
     }
