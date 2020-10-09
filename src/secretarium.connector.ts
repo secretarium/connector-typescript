@@ -163,7 +163,7 @@ export class SCP {
         if (this._socket && this._socket.state > NNG.State.closing)
             this._socket.close();
 
-        this._updateState(ConnectionState.closed);
+        this._updateState(ConnectionState.connecting);
         const trustedKey = typeof knownTrustedKey === 'string' ? Uint8Array.from(crypto.fromBase64(knownTrustedKey)) : knownTrustedKey;
         const socket = this._socket = new NNG.WS();
         let ecdh: CryptoKeyPair;
@@ -211,7 +211,7 @@ export class SCP {
 
                     // Check inheritance from Secretarium knownTrustedKey
                     const knownTrustedKeyPath = serverIdentity.subarray(96);
-                    if (knownTrustedKeyPath.length == 64) {
+                    if (knownTrustedKeyPath.length === 64) {
                         if (!Utils.sequenceEqual(trustedKey, knownTrustedKeyPath))
                             throw new Error(ErrorMessage[ErrorCodes.ETINSRVID]);
                     }
@@ -275,7 +275,7 @@ export class SCP {
                     this._updateState(2);
                     socket.close();
                     this._updateState(3);
-                    reject(`${ErrorMessage[ErrorCodes.EUNABLCON]}${e.type ?? e.message ?? e.toString()}`);
+                    reject(`${ErrorMessage[ErrorCodes.EUNABLCON]}${(e as any).type ?? e.message ?? e.toString()}`);
                 });
         });
     }
