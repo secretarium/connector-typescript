@@ -173,3 +173,22 @@ export async function hash(data: Uint8Array): Promise<Uint8Array> {
 export async function hashBase64(s: string, urlSafeMode = false): Promise<string> {
     return toBase64(await hash(encode(s)), urlSafeMode);
 }
+
+export const convertBase = (value: string, from: number, to: number): string => {
+    const range = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/'.split('');
+    const from_range = range.slice(0, from);
+    const to_range = range.slice(0, to);
+
+    let decValue = value.split('').reverse().reduce(function (carry, digit, index) {
+        if (from_range.indexOf(digit) === -1) throw new Error('Invalid digit `' + digit + '` for base ' + from + '.');
+        return carry += from_range.indexOf(digit) * (Math.pow(from, index));
+    }, 0);
+
+    let newValue = '';
+    while (decValue > 0) {
+        newValue = to_range[decValue % to] + newValue;
+        decValue = (decValue - (decValue % to)) / to;
+    }
+
+    return newValue || '0';
+};
