@@ -45,23 +45,13 @@ export function toBase64(src: Uint8Array, urlSafeMode = false): string {
     return urlSafeMode ? x.replace(/\+/g, '-').replace(/\//g, '_') : x;
 }
 
+export function fromBase64(enc: string): string {
+    return String.fromCodePoint(...crypto.fromBase64(enc));
+}
+
 const byteToHex = (new Array(256)).map(n => n.toString(16).padStart(2, '0'));
 export function toHex(src: Uint8Array, delimiter = ''): string {
     return src.map(n => byteToHex[n]).join(delimiter);
-}
-
-export function toBytes(s: string, base64 = false): Uint8Array {
-    if (base64) {
-        const x = /[-_]/.test(s) ? s.replace(/\\-/g, '+').replace(/\\_/g, '/') : s;
-        return new Uint8Array(atob(x).split('').map(function (c) { return c.charCodeAt(0); }));
-    }
-    else {
-        const buf = new Uint8Array(s.length);
-        for (let i = 0, l = s.length; i < l; i++) {
-            buf[i] = s.charCodeAt(i);
-        }
-        return buf;
-    }
 }
 
 export function getRandomBytes(size = 32): Uint8Array {
@@ -173,22 +163,3 @@ export async function hash(data: Uint8Array): Promise<Uint8Array> {
 export async function hashBase64(s: string, urlSafeMode = false): Promise<string> {
     return toBase64(await hash(encode(s)), urlSafeMode);
 }
-
-export const convertBase = (value: string, from: number, to: number): string => {
-    const range = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/'.split('');
-    const from_range = range.slice(0, from);
-    const to_range = range.slice(0, to);
-
-    let decValue = value.split('').reverse().reduce(function (carry, digit, index) {
-        if (from_range.indexOf(digit) === -1) throw new Error('Invalid digit `' + digit + '` for base ' + from + '.');
-        return carry += from_range.indexOf(digit) * (Math.pow(from, index));
-    }, 0);
-
-    let newValue = '';
-    while (decValue > 0) {
-        newValue = to_range[decValue % to] + newValue;
-        decValue = (decValue - (decValue % to)) / to;
-    }
-
-    return newValue || '0';
-};
