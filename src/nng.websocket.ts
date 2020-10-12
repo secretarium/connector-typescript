@@ -4,7 +4,10 @@ export enum Protocol {
 }
 
 export enum State {
-    connecting, open, closing, closed
+    connecting,
+    open,
+    closing,
+    closed
 }
 
 type EventHandler<T = Event> = (event: T) => void;
@@ -46,11 +49,11 @@ export class WS {
     connect(url: string, protocol: Protocol): WS {
         const s = new WebSocket(url, [protocol]);
         s.binaryType = 'arraybuffer';
-        s.onopen = this._socket && this._socket.onopen || this._handlers.onopen || null;
-        s.onclose = this._socket && this._socket.onclose || this._handlers.onclose || null;
-        s.onmessage = this._socket && this._socket.onmessage || this._handlers.onmessage || null;
-        s.onerror = this._socket && this._socket.onerror || this._handlers.onerror || null;
-        this._requiresHop = protocol == Protocol.pair1;
+        s.onopen = this._socket?.onopen || this._handlers.onopen || null;
+        s.onclose = this._socket?.onclose || this._handlers.onclose || null;
+        s.onmessage = this._socket?.onmessage || this._handlers.onmessage || null;
+        s.onerror = this._socket?.onerror || this._handlers.onerror || null;
+        this._requiresHop = protocol === Protocol.pair1;
         this._socket = s;
         return this;
     }

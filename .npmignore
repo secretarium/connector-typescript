@@ -33,6 +33,7 @@ coverage
 
 # Demo
 assets
+demo
 index.html
 serve.json
 favicon.*

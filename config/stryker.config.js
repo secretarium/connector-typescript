@@ -4,7 +4,6 @@ module.exports = (config) => {
             'src/**/*.[jt]s?(x)',
             '!src/**/?(*.)+(spec|test).[jt]s?(x)'
         ],
-        mutator: 'typescript',
         packageManager: 'yarn',
         reporters: ['html', 'clear-text', 'progress', 'dashboard'],
         testRunner: 'jest',

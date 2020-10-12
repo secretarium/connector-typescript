@@ -13,6 +13,9 @@ var defaultEnv = {
 };
 
 var defaultRules = {
+    'eqeqeq': [
+        'warn'
+    ],
     'indent': [
         'error',
         4,

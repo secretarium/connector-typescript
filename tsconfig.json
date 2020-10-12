@@ -29,6 +29,8 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "skipLibCheck": true,
+        "declaration": true,
         "strict": true,
+        "allowJs": true
     }
 }
