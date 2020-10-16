@@ -21,6 +21,7 @@ class QueryHandlers<T> {
 
 class TransactionHandlers<T> extends QueryHandlers<T> {
     onAcknowledged?: (handler: () => void) => T;
+    onProposed?: (handler: () => void) => T;
     onCommitted?: (handler: () => void) => T;
     onExecuted?: (handler: () => void) => T;
 }
@@ -38,6 +39,7 @@ class QueryNotificationHandlers {
 
 class TransactionNotificationHandlers extends QueryNotificationHandlers {
     onAcknowledged?: Array<() => void>;
+    onProposed?: Array<() => void>;
     onCommitted?: Array<() => void>;
     onExecuted?: Array<() => void>;
 }
@@ -123,6 +125,7 @@ export class SCP {
                     const z = x as TransactionNotificationHandlers;
                     switch (o.state.toLowerCase()) {
                         case 'acknowledged': z.onAcknowledged?.forEach(cb => cb()); break;
+                        case 'proposed': z.onProposed?.forEach(cb => cb()); break;
                         case 'committed': z.onCommitted?.forEach(cb => cb()); break;
                         case 'executed':
                             z.onExecuted?.forEach(cb => cb());
@@ -310,6 +313,7 @@ export class SCP {
         const tx = new Transaction();
         tx.onError = x => { (cbs.onError = cbs.onError || []).push(x); return tx; };
         tx.onAcknowledged = x => { (cbs.onAcknowledged = cbs.onAcknowledged || []).push(x); return tx; };
+        tx.onProposed = x => { (cbs.onProposed = cbs.onProposed || []).push(x); return tx; };
         tx.onCommitted = x => { (cbs.onCommitted = cbs.onCommitted || []).push(x); return tx; };
         tx.onExecuted = x => { (cbs.onExecuted = cbs.onExecuted || []).push(x); return tx; };
         tx.onResult = x => { (cbs.onResult = cbs.onResult || []).push(x); return tx; }; // for chained tx + query
