@@ -14,41 +14,47 @@ class SCPSession {
     }
 }
 
-class QueryHandlers<T> {
-    onError?: (handler: (error: string) => void) => T;
-    onResult?: (handler: (result: Record<string, unknown> | string | void) => void) => T;
+type ErrorHandler = (error: string, requestId: string) => void;
+type ResultHandler = (result: Record<string, unknown> | string | void, requestId: string) => void;
+type NaiveHandler = (requestId: string) => void;
+
+interface QueryHandlers {
+    onError: (handler: ErrorHandler) => this;
+    onResult: (handler: ResultHandler) => this;
 }
 
-class TransactionHandlers<T> extends QueryHandlers<T> {
-    onAcknowledged?: (handler: () => void) => T;
-    onProposed?: (handler: () => void) => T;
-    onCommitted?: (handler: () => void) => T;
-    onExecuted?: (handler: () => void) => T;
+interface TransactionHandlers extends QueryHandlers {
+    onAcknowledged: (handler: NaiveHandler) => this;
+    onProposed: (handler: NaiveHandler) => this;
+    onCommitted: (handler: NaiveHandler) => this;
+    onExecuted: (handler: NaiveHandler) => this;
 }
 
-class QueryNotificationHandlers {
-    onError?: Array<(o: string) => void>;
-    onResult?: Array<(o: Record<string, unknown> | string | void) => void>;
+interface NotificationHandlers {
     failed?: boolean;
-    promise: { resolve: (o: Record<string, unknown> | string | void) => void; reject: (o: string) => void };
-
-    constructor(resolve: (o: Record<string, unknown> | string | void) => void, reject: (o: string) => void) {
-        this.promise = { resolve, reject };
-    }
+    promise: {
+        resolve: (o: Record<string, unknown> | string | void) => void;
+        reject: (o: string) => void
+    };
 }
 
-class TransactionNotificationHandlers extends QueryNotificationHandlers {
-    onAcknowledged?: Array<() => void>;
-    onProposed?: Array<() => void>;
-    onCommitted?: Array<() => void>;
-    onExecuted?: Array<() => void>;
+type QueryNotificationHandlers = NotificationHandlers & {
+    onError: ErrorHandler[];
+    onResult: ResultHandler[];
+};
+
+type TransactionNotificationHandlers = QueryNotificationHandlers & {
+    onAcknowledged: NaiveHandler[];
+    onProposed: NaiveHandler[];
+    onCommitted: NaiveHandler[];
+    onExecuted: NaiveHandler[];
 }
 
-export class Query extends QueryHandlers<Query> {
+export type Query = QueryHandlers & {
     send?: () => Promise<Record<string, unknown> | string | void>;
 }
 
-export class Transaction extends TransactionHandlers<Transaction> {
+export type Transaction = TransactionHandlers & {
     send?: () => Promise<Record<string, unknown> | string | void>;
 }
 
@@ -111,12 +117,12 @@ export class SCP {
                     return;
                 }
                 if (o.error) {
-                    x.onError?.forEach(cb => cb(o.error));
+                    x.onError?.forEach(cb => cb(o.error, o.requestId));
                     x.failed = true;
                     x.promise.reject(o.error);
                 }
                 else if (o.result) {
-                    x.onResult?.forEach(cb => cb(o.result));
+                    x.onResult?.forEach(cb => cb(o.result, o.requestId));
                     x.promise.resolve(o.result);
                 }
                 else if (o.state) {
@@ -124,15 +130,15 @@ export class SCP {
                         return;
                     const z = x as TransactionNotificationHandlers;
                     switch (o.state.toLowerCase()) {
-                        case 'acknowledged': z.onAcknowledged?.forEach(cb => cb()); break;
-                        case 'proposed': z.onProposed?.forEach(cb => cb()); break;
-                        case 'committed': z.onCommitted?.forEach(cb => cb()); break;
+                        case 'acknowledged': z.onAcknowledged?.forEach(cb => cb(o.requestId)); break;
+                        case 'proposed': z.onProposed?.forEach(cb => cb(o.requestId)); break;
+                        case 'committed': z.onCommitted?.forEach(cb => cb(o.requestId)); break;
                         case 'executed':
-                            z.onExecuted?.forEach(cb => cb());
+                            z.onExecuted?.forEach(cb => cb(o.requestId));
                             z.promise.resolve(o.result);
                             break;
                         case 'failed':
-                            z.onError?.forEach(cb => cb(ErrorMessage[ErrorCodes.ETRANSFIL]));
+                            z.onError?.forEach(cb => cb(ErrorMessage[ErrorCodes.ETRANSFIL], o.requestId));
                             z.failed = true;
                             z.promise.reject(o.error);
                             break;
@@ -294,30 +300,50 @@ export class SCP {
     }
 
     newQuery(app: string, command: string, requestId: string, args: Record<string, unknown>): Query {
-        let cbs: QueryNotificationHandlers;
+        let cbs: Partial<QueryNotificationHandlers> = {};
         const pm = new Promise<Record<string, unknown> | string | void>((resolve, reject) => {
-            this._requests[requestId] = cbs = new QueryNotificationHandlers(resolve, reject);
+            this._requests[requestId] = cbs = {
+                onError: [],
+                onResult: [],
+                promise: {
+                    resolve,
+                    reject
+                }
+            };
         });
-        const query = new Query();
-        query.onError = x => { (cbs.onError = cbs.onError || []).push(x); return query; };
-        query.onResult = x => { (cbs.onResult = cbs.onResult || []).push(x); return query; };
-        query.send = () => { this.send(app, command, requestId, args); return pm; };
+        const query: Query = {
+            onError: x => { (cbs.onError = cbs.onError || []).push(x); return query; },
+            onResult: x => { (cbs.onResult = cbs.onResult || []).push(x); return query; },
+            send: () => { this.send(app, command, requestId, args); return pm; }
+        };
         return query;
     }
 
     newTx(app: string, command: string, requestId: string, args: Record<string, unknown>): Transaction {
         let cbs: TransactionNotificationHandlers;
         const pm = new Promise<Record<string, unknown> | string | void>((resolve, reject) => {
-            this._requests[requestId] = cbs = new TransactionNotificationHandlers(resolve, reject);
+            this._requests[requestId] = cbs = {
+                onError: [],
+                onResult: [],
+                onAcknowledged: [],
+                onCommitted: [],
+                onExecuted: [],
+                onProposed: [],
+                promise: {
+                    resolve,
+                    reject
+                }
+            };
         });
-        const tx = new Transaction();
-        tx.onError = x => { (cbs.onError = cbs.onError || []).push(x); return tx; };
-        tx.onAcknowledged = x => { (cbs.onAcknowledged = cbs.onAcknowledged || []).push(x); return tx; };
-        tx.onProposed = x => { (cbs.onProposed = cbs.onProposed || []).push(x); return tx; };
-        tx.onCommitted = x => { (cbs.onCommitted = cbs.onCommitted || []).push(x); return tx; };
-        tx.onExecuted = x => { (cbs.onExecuted = cbs.onExecuted || []).push(x); return tx; };
-        tx.onResult = x => { (cbs.onResult = cbs.onResult || []).push(x); return tx; }; // for chained tx + query
-        tx.send = () => { this.send(app, command, requestId, args); return pm; };
+        const tx: Transaction = {
+            onError: x => { (cbs.onError = cbs.onError || []).push(x); return tx; },
+            onAcknowledged: x => { (cbs.onAcknowledged = cbs.onAcknowledged || []).push(x); return tx; },
+            onProposed: x => { (cbs.onProposed = cbs.onProposed || []).push(x); return tx; },
+            onCommitted: x => { (cbs.onCommitted = cbs.onCommitted || []).push(x); return tx; },
+            onExecuted: x => { (cbs.onExecuted = cbs.onExecuted || []).push(x); return tx; },
+            onResult: x => { (cbs.onResult = cbs.onResult || []).push(x); return tx; }, // for chained tx + query
+            send: () => { this.send(app, command, requestId, args); return pm; }
+        };
         return tx;
     }
 
@@ -325,7 +351,7 @@ export class SCP {
         if (!this._socket || !this._session || this._socket.state !== NNG.State.open) {
             const z = this._requests[requestId]?.onError;
             if (z) {
-                z.forEach(cb => cb(ErrorMessage[ErrorCodes.ENOTCONNT]));
+                z.forEach(cb => cb(ErrorMessage[ErrorCodes.ENOTCONNT], requestId));
                 return;
             }
             else throw new Error(ErrorMessage[ErrorCodes.ENOTCONNT]);
