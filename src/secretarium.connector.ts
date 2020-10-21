@@ -1,6 +1,6 @@
 import * as NNG from './nng.websocket';
 import * as Utils from './secretarium.utils';
-import { Key } from './secretarium.keymanager';
+import { Key } from './secretarium.key';
 import { ErrorCodes, Secrets, ConnectionState, ErrorMessage } from './secretarium.constant';
 import crypto from './msrcrypto';
 
