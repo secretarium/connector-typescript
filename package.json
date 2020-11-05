@@ -1,10 +1,10 @@
 {
     "name": "@secretarium/connector",
-    "version": "0.3.0",
+    "version": "0.5.1",
     "description": "Connector for API communication with Secretarium enclave clusters",
     "main": "lib/secretarium.umd.js",
-    "module": "src/index.ts",
     "types": "lib/index.d.ts",
+    "typings": "lib/index.d.ts",
     "scripts": {
         "preinstall": "node ./scripts/preinstall.js",
         "test": "jest --passWithNoTests --coverage",

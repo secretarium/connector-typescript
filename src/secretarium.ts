@@ -7,8 +7,9 @@ export {
 };
 
 export {
-    Key
-} from './secretarium.keymanager';
+    Key,
+    ExportedKey
+} from './secretarium.key';
 
 export {
     Query,
