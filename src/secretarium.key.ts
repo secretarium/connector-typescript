@@ -44,10 +44,10 @@ export class Key {
             iv = Utils.getRandomBytes(12),
             weakPwd = Utils.encode(pwd),
             strongPwd = await Utils.hash(Utils.concatBytes(salt, weakPwd)),
-            key = await window.crypto.subtle.importKey('raw', strongPwd, 'AES-GCM', false, ['encrypt', 'decrypt']),
+            key = await crypto.subtle?.importKey('raw', strongPwd, 'AES-GCM', false, ['encrypt', 'decrypt']),
             json = JSON.stringify({ publicKey: this.exportableKey?.publicKey, privateKey: this.exportableKey?.privateKey }),
             data = Utils.encode(json),
-            encrypted = new Uint8Array(await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, key, data));
+            encrypted = new Uint8Array(await crypto.subtle?.encrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, key, data));
         this.exportableKeyEncrypted = {
             version: this.version, iv: Utils.toBase64(iv),
             salt: Utils.toBase64(salt), data: Utils.toBase64(encrypted)
@@ -64,10 +64,10 @@ export class Key {
             encrypted = Utils.encode(this.exportableKeyEncrypted.data),
             weakpwd = Utils.encode(pwd),
             strongPwd = await Utils.hash(Utils.concatBytes(salt, weakpwd)),
-            key = await window.crypto.subtle.importKey('raw', strongPwd, 'AES-GCM', false, ['encrypt', 'decrypt']);
+            key = await crypto.subtle?.importKey('raw', strongPwd, 'AES-GCM', false, ['encrypt', 'decrypt']);
         let decrypted: Uint8Array;
         try {
-            decrypted = new Uint8Array(await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, key, encrypted));
+            decrypted = new Uint8Array(await crypto.subtle?.decrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, key, encrypted));
         }
         catch (e) {
             throw new Error(ErrorMessage[ErrorCodes.EINPASSWD]);
@@ -75,13 +75,13 @@ export class Key {
 
         try {
             if (this.version == 0) { // retro compat
-                const publicKey = await window.crypto.subtle.importKey('raw', decrypted.subarray(0, 65), { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']);
-                const privateKey = await window.crypto.subtle.importKey('pkcs8', decrypted.subarray(65), { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']);
+                const publicKey = await crypto.subtle?.importKey('raw', decrypted.subarray(0, 65), { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']);
+                const privateKey = await crypto.subtle?.importKey('pkcs8', decrypted.subarray(65), { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']);
                 await this.setCryptoKey(publicKey, privateKey);
                 this.exportableKey = {
                     version: 1,
-                    publicKey: await window.crypto.subtle.exportKey('jwk', publicKey),
-                    privateKey: await window.crypto.subtle.exportKey('jwk', privateKey)
+                    publicKey: await crypto.subtle?.exportKey('jwk', publicKey),
+                    privateKey: await crypto.subtle?.exportKey('jwk', privateKey)
                 };
                 await this.seal(pwd); // re-encrypt will migrate the encrypted exportable to the latest version
             }
@@ -103,7 +103,8 @@ export class Key {
         const cryptoKey = await crypto.subtle?.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
         const key = new Key();
         await key.setCryptoKey(cryptoKey.publicKey, cryptoKey.privateKey);
-        key.exportableKey = { version: 1,
+        key.exportableKey = {
+            version: 1,
             publicKey: await crypto.subtle?.exportKey('jwk', cryptoKey.publicKey),
             privateKey: await crypto.subtle?.exportKey('jwk', cryptoKey.privateKey)
         };
