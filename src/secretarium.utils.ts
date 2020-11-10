@@ -45,8 +45,9 @@ export function toBase64(src: Uint8Array, urlSafeMode = false): string {
     return urlSafeMode ? x.replace(/\+/g, '-').replace(/\//g, '_') : x;
 }
 
-export function fromBase64(enc: string): string {
-    return String.fromCodePoint(...crypto.fromBase64(enc));
+export function fromBase64(enc: string, urlSafeMode = false): Uint8Array {
+    const x = urlSafeMode ? enc.replace(/-/g, '+').replace(/_/g, '/') : enc;
+    return Uint8Array.from(crypto.fromBase64(x));
 }
 
 const byteToHex = (new Array(256)).map(n => n.toString(16).padStart(2, '0'));
