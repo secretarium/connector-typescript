@@ -5,12 +5,8 @@
 **/tsconfig.json
 tsconfig.*.json
 tslint.json
-**/webpack.config.js
-**/jest.config.js
-**/prettier.config.js
 
 # build scripts
-config
 scripts/hintYarn.js
 
 # Test files
@@ -21,7 +17,10 @@ coverage
 fixtures
 
 # Configs
-*.config.*
+**/webpack.config.js
+**/jest.config.js
+**/stryker.config.js
+**/babel.config.js
 
 # Sources
 node_modules
