@@ -2,6 +2,8 @@ import * as Utils from './secretarium.utils';
 import { ErrorMessage, ErrorCodes } from './secretarium.constant';
 import crypto from './msrcrypto';
 
+const CURRENT_KEY_VERSION = 2;
+
 export interface ExportedKey {
     publicKey: JsonWebKey; // need to use raw (pkcs8) as soon as firefox fixes bug 1133698
     privateKey: JsonWebKey; // need to use raw (pkcs8) as soon as firefox fixes bug 1133698
@@ -11,7 +13,7 @@ export interface KeyEncrypted {
     iv: string;
     salt: string;
     data: string;
-    version:number;
+    version: number;
 }
 
 export class Key {
@@ -42,11 +44,16 @@ export class Key {
             iv = Utils.getRandomBytes(12),
             weakPwd = Utils.encode(pwd),
             strongPwd = await Utils.hash(Utils.concatBytes(salt, weakPwd)),
-            key = await crypto.subtle?.importKey('raw', strongPwd, 'AES-GCM', false, ['encrypt', 'decrypt']),
+            key = await crypto.subtle?.importKey('raw', strongPwd, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']),
             json = JSON.stringify({ publicKey: this.exportableKey?.publicKey, privateKey: this.exportableKey?.privateKey }),
             data = Utils.encode(json),
             encrypted = new Uint8Array(await crypto.subtle?.encrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, key, data)),
-            encryptedKey = { version: 1, iv: Utils.toBase64(iv), salt: Utils.toBase64(salt), data: Utils.toBase64(encrypted)};
+            encryptedKey = {
+                version: CURRENT_KEY_VERSION,
+                iv: Utils.toBase64(iv),
+                salt: Utils.toBase64(salt),
+                data: Utils.toBase64(encrypted)
+            };
         return encryptedKey;
     }
 
@@ -54,7 +61,8 @@ export class Key {
         const cryptoKey = await crypto.subtle?.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
         const key = new Key();
         await key.setCryptoKey(cryptoKey.publicKey, cryptoKey.privateKey);
-        key.exportableKey = { version: 1,
+        key.exportableKey = {
+            version: CURRENT_KEY_VERSION,
             publicKey: await crypto.subtle?.exportKey('jwk', cryptoKey.publicKey),
             privateKey: await crypto.subtle?.exportKey('jwk', cryptoKey.privateKey)
         };
@@ -74,33 +82,42 @@ export class Key {
             encrypted = Utils.fromBase64(encryptedKey.data),
             weakpwd = Utils.encode(pwd),
             strongPwd = await Utils.hash(Utils.concatBytes(salt, weakpwd)),
-            aesKey = await crypto.subtle?.importKey('raw', strongPwd, 'AES-GCM', false, ['encrypt', 'decrypt']);
+            aesKey = await crypto.subtle?.importKey('raw', strongPwd, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
         let decrypted: Uint8Array;
         try {
             decrypted = new Uint8Array(await crypto.subtle?.decrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, aesKey, encrypted));
         }
         catch (e) {
+            console.error(e);
             throw new Error(ErrorMessage[ErrorCodes.EINPASSWD]);
         }
 
         const key = new Key();
         try {
-            if (encryptedKey.version === 0) { // retro compat
-                const publicKey = await crypto.subtle?.importKey('raw', decrypted.subarray(0, 65), { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']);
-                const privateKey = await crypto.subtle?.importKey('pkcs8', decrypted.subarray(65), { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']);
-                await key.setCryptoKey(publicKey, privateKey);
-                key.exportableKey = {
-                    version: 1,
-                    publicKey: await crypto.subtle?.exportKey('jwk', publicKey),
-                    privateKey: await crypto.subtle?.exportKey('jwk', privateKey)
-                };
+            switch (parseInt(`${encryptedKey.version}`)) {
+                case 0:
+                case 1: {
+                    const publicKey = await crypto.subtle?.importKey('raw', decrypted.subarray(0, 65), { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']);
+                    const privateKey = await crypto.subtle?.importKey('pkcs8', decrypted.subarray(65), { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']);
+                    await key.setCryptoKey(publicKey, privateKey);
+                    key.exportableKey = {
+                        version: CURRENT_KEY_VERSION,
+                        publicKey: await crypto.subtle?.exportKey('jwk', publicKey),
+                        privateKey: await crypto.subtle?.exportKey('jwk', privateKey)
+                    };
+                    break;
+                }
+                default: {
+                    const d = JSON.parse(Utils.decode(decrypted));
+                    await key.setCryptoKeyFromJwk(d.publicKey, d.privateKey);
+                    key.exportableKey = {
+                        version: CURRENT_KEY_VERSION,
+                        publicKey: d.publicKey,
+                        privateKey: d.privateKey
+                    };
+                    break;
+                }
             }
-            else { // version 1
-                const d = JSON.parse(Utils.decode(decrypted));
-                await key.setCryptoKeyFromJwk(d.publicKey, d.privateKey);
-                key.exportableKey = { version: 1, publicKey: d.publicKey, privateKey: d.privateKey };
-            }
-
         }
         catch (e) {
             throw new Error(ErrorMessage[ErrorCodes.EINVKFORM]);
