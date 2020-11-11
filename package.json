@@ -3,8 +3,8 @@
     "version": "0.7.5",
     "description": "Connector for API communication with Secretarium enclave clusters",
     "main": "lib/secretarium.umd.js",
-    "types": "lib/index.d.ts",
-    "typings": "lib/index.d.ts",
+    "types": "lib/src/index.d.ts",
+    "typings": "lib/src/index.d.ts",
     "scripts": {
         "preinstall": "node ./scripts/preinstall.js",
         "test": "jest --passWithNoTests --coverage",
