@@ -3,6 +3,9 @@
 * text eol=lf
 *.png binary
 *.jpg binary
+*.woff binary
+*.ttf binary
+*.eotsh binary
 
 # GitHub Linguist Override
 *.js linguist-vendored

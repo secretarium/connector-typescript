@@ -6128,7 +6128,7 @@ var msrCrypto = function () {
                     var x = eventData.x || eventData.clientX || eventData.offsetX || 0;
                     var y = eventData.y || eventData.clientY || eventData.offsetY || 0;
                     var arr = [d & 0x0ff, (d >> 8) & 0x0ff, (d >> 16) & 0x0ff, (d >> 24) & 0x0ff,
-                    x & 0x0ff, (x >> 8) & 0x0ff, y & 0x0ff, (y >> 8) & 0x0ff
+                        x & 0x0ff, (x >> 8) & 0x0ff, y & 0x0ff, (y >> 8) & 0x0ff
                     ];
 
                     updatePool(arr);
@@ -8939,9 +8939,9 @@ var msrCrypto = function () {
                             resolve(cipherArrayBuffer);
                         })
 
-                    ['catch'](function (err) {
-                        reject(err);
-                    });
+                        ['catch'](function (err) {
+                            reject(err);
+                        });
                 });
             },
 
@@ -8968,9 +8968,9 @@ var msrCrypto = function () {
                             resolve(key);
                         })
 
-                    ['catch'](function (err) {
-                        reject(err);
-                    });
+                        ['catch'](function (err) {
+                            reject(err);
+                        });
                 });
 
             }
