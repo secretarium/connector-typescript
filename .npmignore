@@ -18,6 +18,7 @@ scripts/hintYarn.js
 **/*.test.*
 __tests__
 coverage
+fixtures
 
 # Configs
 *.config.*
