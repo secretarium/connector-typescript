@@ -6,7 +6,7 @@
         "**/__tests__/**"
     ],
     "compilerOptions": {
-        "baseUrl": ".",
+        "baseUrl": "./src",
         "outDir": "./lib",
         "sourceMap": true,
         "allowUnreachableCode": false,
