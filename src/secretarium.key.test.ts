@@ -65,3 +65,12 @@ test('Import sealed key v2 with wrong password', async () => {
         expect(err).toEqual(new Error('Can\'t decrypt, Invalid password'));
     });
 });
+
+test('Reexport an imported sealed key v2', async () => {
+
+    const newKey = await Key.importEncryptedKeyPair(encV2Key, 'HelloWorld');
+    const exportedKeyPair = await newKey.exportKey();
+    expect(exportedKeyPair).toBeDefined();
+    expect(exportedKeyPair.privateKey).toBeDefined();
+    expect(exportedKeyPair.publicKey).toBeDefined();
+});
