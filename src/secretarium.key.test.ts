@@ -74,3 +74,16 @@ test('Reexport an imported sealed key v2', async () => {
     expect(exportedKeyPair.privateKey).toBeDefined();
     expect(exportedKeyPair.publicKey).toBeDefined();
 });
+
+
+test('Key cycle generate import', async () => {
+
+    const newKey = await Key.createKey();
+    const clearKey = await newKey.exportKey();
+    const newSeal = await newKey.seal('HelloWorld');
+    const encKey = await newSeal.exportEncryptedKey();
+    const nextKey = await Key.importEncryptedKeyPair(encKey, 'HelloWorld');
+    const nextClearKey = await nextKey.exportKey();
+
+    expect(nextClearKey).toEqual(clearKey);
+});

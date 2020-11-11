@@ -48,9 +48,10 @@ export class Key {
         const weakPwd = Utils.encode(pwd);
         const strongPwd = await Utils.hash(Utils.concatBytes(salt, weakPwd));
         const key = await crypto.subtle?.importKey('raw', strongPwd, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+        const keyPair = await this.exportKey();
         const data = Utils.encode(JSON.stringify({
-            publicKey: this.cryptoKeyPair?.publicKey,
-            privateKey: this.cryptoKeyPair?.privateKey
+            publicKey: keyPair.publicKey,
+            privateKey: keyPair.privateKey
         }));
         const encrypted = new Uint8Array(await crypto.subtle?.encrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, key, data));
 
@@ -149,9 +150,8 @@ export class Key {
                 const encryptedKey = inputEncryptedKeyPair as EncryptedKeyPairV2;
                 const decrypted = await decryptV2(encryptedKey);
                 const obj = JSON.parse(Utils.decode(decrypted));
-
                 const publicKey = await crypto.subtle?.importKey('jwk', obj.publicKey, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']);
-                const privateKey = await crypto.subtle?.importKey('jwk', obj.publicKey, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']);
+                const privateKey = await crypto.subtle?.importKey('jwk', obj.privateKey, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']);
 
                 return new Key({
                     publicKey,
