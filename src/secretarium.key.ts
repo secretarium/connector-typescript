@@ -4,7 +4,7 @@ import crypto from './msrcrypto';
 
 const CURRENT_KEY_VERSION = 2;
 
-type ClearKeyPair = {
+export type ClearKeyPair = {
     publicKey: JsonWebKey; // need to use raw (pkcs8) as soon as firefox fixes bug 1133698
     privateKey: JsonWebKey; // need to use raw (pkcs8) as soon as firefox fixes bug 1133698
     version: number;
@@ -26,7 +26,7 @@ type EncryptedKeyPairV2 = {
     data: string;
 }
 
-type EncryptedKeyPair = EncryptedKeyPairV0 | EncryptedKeyPairV2;
+export type EncryptedKeyPair = EncryptedKeyPairV0 | EncryptedKeyPairV2;
 
 export class Key {
 
