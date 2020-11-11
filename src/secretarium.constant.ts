@@ -23,7 +23,8 @@ export enum ErrorCodes {
     EUNSPEXPS,
     EKEYLDFAI,
     EKEYNOTEC,
-    EXORNOTSS
+    EXORNOTSS,
+    EKEYNOTSL
 }
 
 export const ErrorMessage: Record<ErrorCodes, string> = {
@@ -46,7 +47,8 @@ export const ErrorMessage: Record<ErrorCodes, string> = {
     [ErrorCodes.EUNSPEXPS]: 'Unsupported, expecting a single key file',
     [ErrorCodes.EKEYLDFAI]: 'Failed to load the key file',
     [ErrorCodes.EKEYNOTEC]: 'Can\'t save, key must be encrypted',
-    [ErrorCodes.EXORNOTSS]: 'Array should have the same size'
+    [ErrorCodes.EXORNOTSS]: 'Array should have the same size',
+    [ErrorCodes.EKEYNOTSL]: 'Key as not been sealed'
 };
 
 export enum ConnectionState {

@@ -246,14 +246,16 @@ export class SCP {
                     const cryptoKey = await crypto.subtle?.importKey('raw', key, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
                     this._session = new SCPSession(iv, cryptoKey);
 
-                    if (!userKey || !userKey.cryptoKey || !userKey.publicKeyRaw)
+                    const cryptoKeyPair = await userKey.exportKey();
+                    const publicKeyRaw = await userKey.getRawPublicKey();
+                    if (!userKey || !cryptoKeyPair || !publicKeyRaw)
                         throw new Error(ErrorMessage[ErrorCodes.ETINUSRKY]);
 
                     const nonce = Utils.getRandomBytes(32);
                     const signedNonce = new Uint8Array(await crypto.subtle?.sign(
-                        { name: 'ECDSA', hash: { name: 'SHA-256' } }, userKey.cryptoKey.privateKey, nonce));
+                        { name: 'ECDSA', hash: { name: 'SHA-256' } }, cryptoKeyPair.privateKey, nonce));
                     const clientProofOfIdentity = Utils.concatBytesArrays(
-                        [nonce, ecdhPubKeyRaw, userKey.publicKeyRaw, signedNonce]);
+                        [nonce, ecdhPubKeyRaw, publicKeyRaw, signedNonce]);
 
                     const encryptedClientProofOfIdentity = await this._encrypt(clientProofOfIdentity);
                     return new Promise((resolve, reject) => {

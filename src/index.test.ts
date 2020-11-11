@@ -7,11 +7,8 @@ test('Exports the right shape', () => {
 
     expect(Object.getOwnPropertyNames(BaseHandle).sort()).toEqual([
         'Constants',
-        'ExportedKey',
         'Key',
-        'Query',
         'SCP',
-        'Transaction',
         'Utils'
     ].sort());
 });
