@@ -8,7 +8,8 @@ export {
 
 export {
     Key,
-    ExportedKey
+    ExportedKey,
+    KeyEncrypted
 } from './secretarium.key';
 
 export {
