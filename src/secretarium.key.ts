@@ -30,17 +30,21 @@ export type EncryptedKeyPair = EncryptedKeyPairV0 | EncryptedKeyPairV2;
 
 export class Key {
 
-    private cryptoKeyPair: CryptoKeyPair;
-    private exportableKey?: ClearKeyPair;
-    private exportableEncryptedKey?: EncryptedKeyPairV2;
-    private rawPublicKey?: Uint8Array;
+    private _cryptoKeyPair: CryptoKeyPair;
+    private _exportableKey?: ClearKeyPair;
+    private _exportableEncryptedKey?: EncryptedKeyPairV2;
+    private _rawPublicKey?: Uint8Array;
     private constructor(keyPair: CryptoKeyPair) {
-        this.cryptoKeyPair = keyPair;
+        this._cryptoKeyPair = keyPair;
+    }
+
+    getCryptoKeyPair(): CryptoKeyPair {
+        return this._cryptoKeyPair;
     }
 
     async seal(pwd: string): Promise<Key> {
 
-        if (!this.cryptoKeyPair)
+        if (!this._cryptoKeyPair)
             throw new Error(ErrorMessage[ErrorCodes.EKEYISENC]);
 
         const salt = Utils.getRandomBytes(32);
@@ -55,7 +59,7 @@ export class Key {
         }));
         const encrypted = new Uint8Array(await crypto.subtle?.encrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, key, data));
 
-        this.exportableEncryptedKey = {
+        this._exportableEncryptedKey = {
             version: CURRENT_KEY_VERSION,
             iv: Utils.toBase64(iv),
             salt: Utils.toBase64(salt),
@@ -66,25 +70,25 @@ export class Key {
     }
 
     async exportKey(): Promise<ClearKeyPair> {
-        if (!this.exportableKey)
-            this.exportableKey = {
+        if (!this._exportableKey)
+            this._exportableKey = {
                 version: CURRENT_KEY_VERSION,
-                publicKey: await crypto.subtle?.exportKey('jwk', this.cryptoKeyPair.publicKey),
-                privateKey: await crypto.subtle?.exportKey('jwk', this.cryptoKeyPair.privateKey)
+                publicKey: await crypto.subtle?.exportKey('jwk', this._cryptoKeyPair.publicKey),
+                privateKey: await crypto.subtle?.exportKey('jwk', this._cryptoKeyPair.privateKey)
             };
-        return this.exportableKey;
+        return this._exportableKey;
     }
 
     async exportEncryptedKey(): Promise<EncryptedKeyPairV2> {
-        if (!this.exportableEncryptedKey)
+        if (!this._exportableEncryptedKey)
             throw new Error(ErrorMessage[ErrorCodes.EKEYNOTSL]);
-        return this.exportableEncryptedKey;
+        return this._exportableEncryptedKey;
     }
 
     async getRawPublicKey(): Promise<Uint8Array> {
-        if (!this.rawPublicKey)
-            this.rawPublicKey = new Uint8Array(await crypto.subtle?.exportKey('raw', this.cryptoKeyPair.publicKey)).subarray(1);
-        return this.rawPublicKey;
+        if (!this._rawPublicKey)
+            this._rawPublicKey = new Uint8Array(await crypto.subtle?.exportKey('raw', this._cryptoKeyPair.publicKey)).subarray(1);
+        return this._rawPublicKey;
     }
 
     async getRawPublicKeyHex(delimiter = ''): Promise<string> {

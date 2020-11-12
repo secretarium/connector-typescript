@@ -246,7 +246,7 @@ export class SCP {
                     const cryptoKey = await crypto.subtle?.importKey('raw', key, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
                     this._session = new SCPSession(iv, cryptoKey);
 
-                    const cryptoKeyPair = await userKey.exportKey();
+                    const cryptoKeyPair = userKey.getCryptoKeyPair();
                     const publicKeyRaw = await userKey.getRawPublicKey();
                     if (!userKey || !cryptoKeyPair || !publicKeyRaw)
                         throw new Error(ErrorMessage[ErrorCodes.ETINUSRKY]);
