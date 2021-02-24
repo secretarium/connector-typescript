@@ -160,3 +160,12 @@ export async function hash(data: Uint8Array): Promise<Uint8Array> {
 export async function hashBase64(s: string, urlSafeMode = false): Promise<string> {
     return toBase64(await hash(encode(s)), urlSafeMode);
 }
+
+export async function decryptPushNotification(pushNotifEncryptionKey: string, body: string): Promise<string> {
+    const key = fromBase64(pushNotifEncryptionKey, true);
+    const encryptedBytes = fromBase64(body, true);
+    const iv = encryptedBytes.subarray(0, 12);
+    const cryptoKey = await crypto.subtle?.importKey('raw', key, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+    const msgBytes = await crypto.subtle?.decrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, cryptoKey, encryptedBytes.subarray(12));
+    return decode(msgBytes);
+}
