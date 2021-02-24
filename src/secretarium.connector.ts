@@ -2,7 +2,7 @@ import * as NNG from './nng.websocket';
 import * as Utils from './secretarium.utils';
 import { Key } from './secretarium.key';
 import { ErrorCodes, Secrets, ConnectionState, ErrorMessage } from './secretarium.constant';
-import crypto from './msrcrypto';
+import crypto from './secretarium.crypto';
 
 class SCPSession {
     iv: Uint8Array;
@@ -94,7 +94,7 @@ export class SCP {
             throw new Error(ErrorMessage[ErrorCodes.ESCPNOTRD]);
         const ivOffset = Utils.getRandomBytes(16);
         const iv = Utils.incrementBy(this._session.iv, ivOffset).subarray(0, 12);
-        const encrypted = new Uint8Array(await crypto.subtle?.encrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 },
+        const encrypted = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 },
             this._session.cryptoKey, data));
         return Utils.concatBytes(ivOffset, encrypted);
     }
@@ -103,13 +103,15 @@ export class SCP {
         if (!this._session)
             throw ErrorCodes.ESCPNOTRD;
         const iv = Utils.incrementBy(this._session.iv, data.subarray(0, 16)).subarray(0, 12);
-        return new Uint8Array(await crypto.subtle?.decrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 },
+        return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 },
             this._session.cryptoKey, data.subarray(16)));
     }
 
     private _notify(json: string): void {
         try {
             const o = JSON.parse(json);
+            if (process.env.NODE_ENV === 'development' || process.env.REACT_APP_CFA_PRODUCTION_LOGGING === 'true')
+                console.debug('Secretarium received:', o);
             if (o !== null && o.requestId) {
                 const x = this._requests[o.requestId];
                 if (!x) {
@@ -160,11 +162,11 @@ export class SCP {
         return nonce; // proof-of-work verification is currently deactivated
     }
 
-    get state(): ConnectionState {
+    get state() {
         return this._connectionState;
     }
 
-    get bufferedAmount(): number {
+    get bufferedAmount() {
         return this._socket?.bufferedAmount || 0;
     }
 
@@ -173,12 +175,11 @@ export class SCP {
             this._socket.close();
 
         this._updateState(ConnectionState.connecting);
-        const trustedKey = typeof knownTrustedKey === 'string' ? Uint8Array.from(crypto.fromBase64(knownTrustedKey)) : knownTrustedKey;
+        const trustedKey = typeof knownTrustedKey === 'string' ? Uint8Array.from(Utils.fromBase64(knownTrustedKey, true)) : knownTrustedKey;
         const socket = this._socket = new NNG.WS();
         let ecdh: CryptoKeyPair;
         let ecdhPubKeyRaw: Uint8Array;
         let serverEcdsaPubKey: CryptoKey;
-
 
         return new Promise((resolve, reject) => {
             new Promise((resolve, reject) => {
@@ -194,8 +195,8 @@ export class SCP {
                         .onerror(() => { this._updateState(ConnectionState.closed); })
                         .onclose(() => { this._updateState(ConnectionState.closed); });
 
-                    ecdh = await crypto.subtle?.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
-                    ecdhPubKeyRaw = new Uint8Array(await crypto.subtle?.exportKey('raw', ecdh.publicKey)).subarray(1);
+                    ecdh = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+                    ecdhPubKeyRaw = new Uint8Array(await crypto.subtle.exportKey('raw', ecdh.publicKey)).subarray(1);
                     return new Promise((resolve, reject) => {
                         const tId = setTimeout(() => { reject(ErrorMessage[ErrorCodes.ETIMOCHEL]); }, 3000);
                         socket.onmessage(x => { clearTimeout(tId); resolve(x); }).send(ecdhPubKeyRaw);
@@ -211,10 +212,10 @@ export class SCP {
                 })
                 .then(async (serverIdentity: Uint8Array): Promise<Uint8Array> => {
                     const preMasterSecret = serverIdentity.subarray(0, 32);
-                    const serverEcdhPubKey = await crypto.subtle?.importKey('raw',
+                    const serverEcdhPubKey = await crypto.subtle.importKey('raw',
                         Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), serverIdentity.subarray(32, 96)),
                         { name: 'ECDH', namedCurve: 'P-256' }, false, []);
-                    serverEcdsaPubKey = await crypto.subtle?.importKey('raw',
+                    serverEcdsaPubKey = await crypto.subtle.importKey('raw',
                         Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), serverIdentity.subarray(serverIdentity.length - 64)),
                         { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
 
@@ -229,21 +230,21 @@ export class SCP {
                             const key = knownTrustedKeyPath.subarray(i, 64);
                             const proof = knownTrustedKeyPath.subarray(i + 64, 64);
                             const keyChild = knownTrustedKeyPath.subarray(i + 128, 64);
-                            const ecdsaKey = await crypto.subtle?.importKey('raw',
+                            const ecdsaKey = await crypto.subtle.importKey('raw',
                                 Utils.concatBytes(/*uncompressed*/Uint8Array.from([4]), key),
                                 { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
-                            if (!await crypto.subtle?.verify({ name: 'ECDSA', hash: { name: 'SHA-256' } }, ecdsaKey, proof, keyChild))
+                            if (!await crypto.subtle.verify({ name: 'ECDSA', hash: { name: 'SHA-256' } }, ecdsaKey, proof, keyChild))
                                 throw new Error(`${ErrorMessage[ErrorCodes.ETINSRVIC]}${i}`);
                         }
                     }
 
-                    const commonSecret = await crypto.subtle?.deriveBits(
-                        { name: 'ECDH', namedCurve: 'P-256', public: serverEcdhPubKey }, ecdh.privateKey, 256);
-                    const sha256Common = new Uint8Array(await crypto.subtle?.digest({ name: 'SHA-256' }, commonSecret));
+                    const commonSecret = await crypto.subtle.deriveBits(
+                        { name: 'ECDH', public: serverEcdhPubKey }, ecdh.privateKey, 256);
+                    const sha256Common = new Uint8Array(await crypto.subtle.digest({ name: 'SHA-256' }, commonSecret));
                     const symmetricKey = Utils.xor(preMasterSecret, sha256Common);
                     const iv = symmetricKey.subarray(16);
                     const key = symmetricKey.subarray(0, 16);
-                    const cryptoKey = await crypto.subtle?.importKey('raw', key, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+                    const cryptoKey = await crypto.subtle.importKey('raw', key, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
                     this._session = new SCPSession(iv, cryptoKey);
 
                     const cryptoKeyPair = userKey.getCryptoKeyPair();
@@ -252,7 +253,7 @@ export class SCP {
                         throw new Error(ErrorMessage[ErrorCodes.ETINUSRKY]);
 
                     const nonce = Utils.getRandomBytes(32);
-                    const signedNonce = new Uint8Array(await crypto.subtle?.sign(
+                    const signedNonce = new Uint8Array(await crypto.subtle.sign(
                         { name: 'ECDSA', hash: { name: 'SHA-256' } }, cryptoKeyPair.privateKey, nonce));
                     const clientProofOfIdentity = Utils.concatBytesArrays(
                         [nonce, ecdhPubKeyRaw, publicKeyRaw, signedNonce]);
@@ -268,7 +269,7 @@ export class SCP {
                     const welcome = Utils.encode(Secrets.SRTWELCOME);
                     const toVerify = Utils.concatBytes(serverProofOfIdentity.subarray(0, 32), welcome);
                     const serverSignedHash = serverProofOfIdentity.subarray(32, 96);
-                    const check = await crypto.subtle?.verify({ name: 'ECDSA', hash: { name: 'SHA-256' } },
+                    const check = await crypto.subtle.verify({ name: 'ECDSA', hash: { name: 'SHA-256' } },
                         serverEcdsaPubKey, serverSignedHash, toVerify);
                     if (!check)
                         throw new Error(ErrorMessage[ErrorCodes.ETINSRVPI]);
@@ -296,12 +297,12 @@ export class SCP {
         return this;
     }
 
-    onStatechange(handler: (state: ConnectionState) => void): SCP {
+    onStateChange(handler: (state: ConnectionState) => void): SCP {
         this._onStateChange = handler;
         return this;
     }
 
-    newQuery(app: string, command: string, requestId: string, args: Record<string, unknown>): Query {
+    newQuery(app: string, command: string, requestId: string, args: Record<string, unknown> | string): Query {
         let cbs: Partial<QueryNotificationHandlers> = {};
         const pm = new Promise<Record<string, unknown> | string | void>((resolve, reject) => {
             this._requests[requestId] = cbs = {
@@ -321,7 +322,7 @@ export class SCP {
         return query;
     }
 
-    newTx(app: string, command: string, requestId: string, args: Record<string, unknown>): Transaction {
+    newTx(app: string, command: string, requestId: string, args: Record<string, unknown> | string): Transaction {
         let cbs: TransactionNotificationHandlers;
         const pm = new Promise<Record<string, unknown> | string | void>((resolve, reject) => {
             this._requests[requestId] = cbs = {
@@ -349,7 +350,7 @@ export class SCP {
         return tx;
     }
 
-    async send(app: string, command: string, requestId: string, args: Record<string, unknown>): Promise<void> {
+    async send(app: string, command: string, requestId: string, args: Record<string, unknown> | string): Promise<void> {
         if (!this._socket || !this._session || this._socket.state !== NNG.State.open) {
             const z = this._requests[requestId]?.onError;
             if (z) {
@@ -367,7 +368,14 @@ export class SCP {
         });
         const data = Utils.encode(query);
         const encrypted = await this._encrypt(data);
-        this._socket.send(encrypted);
+
+        if (app !== '__local__') {
+
+            if (process.env.NODE_ENV === 'development' || process.env.REACT_APP_CFA_PRODUCTION_LOGGING === 'true')
+                console.debug('Secretarium sending:', JSON.parse(query));
+
+            this._socket.send(encrypted);
+        }
     }
 
     close(): SCP {
