@@ -8,4 +8,4 @@
 **/.git/**
 **/public/**
 !.eslintrc.js
-src/msrcrypto.js
+vendor/msrcrypto.js

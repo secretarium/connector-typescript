@@ -15,26 +15,11 @@
 //    limitations under the License.
 //
 //*******************************************************************************
+"use strict";
 
-
+var msrCryptoVersion = "1.6.2";
+var global = {};
 var self = undefined;
-var msrCryptoVersion = '1.6.1';
-
-// (function (root, factory) {
-
-//     if (typeof define === 'function' && define.amd) {
-//         define([], function () {
-//             return (root.msrCrypto = factory(root));
-//         });
-//     } else if (typeof exports === 'object') {
-//         module.exports = factory(root);
-//     } else {
-//         root.msrCrypto = factory(root);
-//     }
-
-// }(this, function (global) {
-
-const global = {};
 
 var msrCrypto = function () {
 
@@ -64,7 +49,7 @@ var msrCrypto = function () {
 
     var scriptUrl = (function () {
 
-        if (typeof document !== 'undefined') {
+        if (typeof document !== "undefined") {
             try {
                 throw new Error();
             } catch (e) {
@@ -73,7 +58,7 @@ var msrCrypto = function () {
                     return (match && match.length > 0) ? match[0] : null;
                 }
             }
-        } else if (typeof self !== 'undefined') {
+        } else if (typeof self !== "undefined") {
             return self.location.href;
         }
 
@@ -83,17 +68,17 @@ var msrCrypto = function () {
 
     var fprngEntropyProvided = false;
 
-    var webWorkerSupport = (typeof Worker !== 'undefined');
+    var webWorkerSupport = (typeof Worker !== "undefined");
 
-    var runningInWorkerInstance = typeof importScripts === 'function' && self instanceof WorkerGlobalScope;
+    var runningInWorkerInstance = typeof importScripts === "function" && self instanceof WorkerGlobalScope;
 
     var workerInitialized = false;
 
-    var typedArraySupport = (typeof ArrayBuffer !== 'undefined');
+    var typedArraySupport = (typeof ArrayBuffer !== "undefined");
 
     var setterSupport = (function () {
         try {
-            Object.defineProperty({}, 'oncomplete', {});
+            Object.defineProperty({}, "oncomplete", {});
             return true;
         } catch (ex) {
             return false;
@@ -122,10 +107,10 @@ var msrCrypto = function () {
 
     var msrcryptoUtilities = (function () {
 
-        var encodingChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+        var encodingChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 
         function consoleLog(text) {
-            if ('console' in self && 'log' in console) {
+            if ("console" in self && "log" in console) {
                 console.log(text);
             }
         }
@@ -133,11 +118,11 @@ var msrCrypto = function () {
         function toBase64(data, base64Url) {
             var dataType = getObjectType(data);
 
-            if (dataType !== 'Array' && dataType !== 'Uint8Array' && dataType !== 'ArrayBuffer') {
-                throw new Error('invalid input');
+            if (dataType !== "Array" && dataType !== "Uint8Array" && dataType !== "ArrayBuffer") {
+                throw new Error("invalid input");
             }
 
-            var output = '';
+            var output = "";
             var input = toArray(data);
 
             if (!base64Url) {
@@ -174,17 +159,17 @@ var msrCrypto = function () {
             }
 
             if (base64Url) {
-                return output.replace(/\+/g, '-').replace(/\//g, '_').replace(/\=/g, '');
+                return output.replace(/\+/g, "-").replace(/\//g, "_").replace(/\=/g, "");
             }
 
             return output;
         }
 
         function base64ToBytes(encodedString) {
-            encodedString = encodedString.replace(/-/g, '+').replace(/_/g, '/');
+            encodedString = encodedString.replace(/-/g, "+").replace(/_/g, "/");
 
             while (encodedString.length % 4 !== 0) {
-                encodedString += '=';
+                encodedString += "=";
             }
 
             var output = [];
@@ -192,7 +177,7 @@ var msrCrypto = function () {
             var enc1, enc2, enc3, enc4;
             var i;
 
-            encodedString = encodedString.replace(/[^A-Za-z0-9\+\/\=]/g, '');
+            encodedString = encodedString.replace(/[^A-Za-z0-9\+\/\=]/g, "");
 
             for (i = 0; i < encodedString.length; i += 4) {
 
@@ -226,20 +211,20 @@ var msrCrypto = function () {
         }
 
         function bytesToHexString(bytes, separate) {
-            var result = '';
-            if (typeof separate === 'undefined') {
+            var result = "";
+            if (typeof separate === "undefined") {
                 separate = false;
             }
 
             for (var i = 0; i < bytes.length; i++) {
 
                 if (separate && (i % 4 === 0) && i !== 0) {
-                    result += '-';
+                    result += "-";
                 }
 
                 var hexval = bytes[i].toString(16).toUpperCase();
                 if (hexval.length === 1) {
-                    result += '0';
+                    result += "0";
                 }
 
                 result += hexval;
@@ -258,7 +243,7 @@ var msrCrypto = function () {
         }
 
         function hexToBytesArray(hexString) {
-            hexString = hexString.replace(/\-/g, '');
+            hexString = hexString.replace(/\-/g, "");
 
             var result = [];
             while (hexString.length >= 2) {
@@ -343,7 +328,7 @@ var msrCrypto = function () {
                 return typedArray;
             }
 
-            if (getObjectType(typedArray) === 'ArrayBuffer') {
+            if (getObjectType(typedArray) === "ArrayBuffer") {
                 typedArray = new Uint8Array(typedArray);
             } else if (typedArray.BYTES_PER_ELEMENT > 1) {
                 typedArray = new Uint8Array(typedArray.buffer);
@@ -399,7 +384,7 @@ var msrCrypto = function () {
         }
 
         function verifyByteArray(array) {
-            if (getObjectType(array) !== 'Array') {
+            if (getObjectType(array) !== "Array") {
                 return false;
             }
 
@@ -462,7 +447,7 @@ var msrCrypto = function () {
         }
 
         function bytesToString(textBytes) {
-            var result = '',
+            var result = "",
                 charCode;
 
             textBytes = toArray(textBytes);
@@ -528,24 +513,24 @@ var msrCrypto = function () {
     var asn1 = (function () {
 
         var asn1Types = {
-            0x00: 'CUSTOM',
-            0x01: 'BOOLEAN',
-            0x02: 'INTEGER',
-            0x03: 'BIT STRING',
-            0x04: 'OCTET STRING',
-            0x05: 'NULL',
-            0x06: 'OBJECT IDENTIFIER',
-            0x10: 'SEQUENCE',
-            0x11: 'SET',
-            0x13: 'PRINTABLE STRING',
-            0x17: 'UTCTime'
+            0x00: "CUSTOM",
+            0x01: "BOOLEAN",
+            0x02: "INTEGER",
+            0x03: "BIT STRING",
+            0x04: "OCTET STRING",
+            0x05: "NULL",
+            0x06: "OBJECT IDENTIFIER",
+            0x10: "SEQUENCE",
+            0x11: "SET",
+            0x13: "PRINTABLE STRING",
+            0x17: "UTCTime"
         };
 
         var asn1Classes = {
-            0x00: 'UNIVERSAL',
-            0x01: 'APPLICATION',
-            0x02: 'Context-Defined',
-            0x03: 'PRIVATE'
+            0x00: "UNIVERSAL",
+            0x01: "APPLICATION",
+            0x02: "Context-Defined",
+            0x03: "PRIVATE"
         };
 
         function parse(bytes, force) {
@@ -578,7 +563,7 @@ var msrCrypto = function () {
             obj.header = header;
             obj.data = bytes.slice(0, dataLen + header);
             if (constructed || force) {
-                if (obj.type === 'BIT STRING' && bytes[header] === 0) {
+                if (obj.type === "BIT STRING" && bytes[header] === 0) {
                     i++;
                 }
                 remainder = bytes.slice(header, obj.data.length);
@@ -596,19 +581,19 @@ var msrCrypto = function () {
 
         function encode(asn1tree) {
 
-            throw new Error('not implemented');
+            throw new Error("not implemented");
         }
 
         function toString(objTree, indent) {
 
-            var output = new Array(indent + 1).join(' ') + objTree.type + ' (' + objTree.length + ') ' + bytesToHexString(objTree.data).substring(0, 16) + '\n';
+            var output = new Array(indent + 1).join(" ") + objTree.type + " (" + objTree.length + ") " + bytesToHexString(objTree.data).substring(0, 16) + "\n";
 
             if (!objTree.children) {
                 return output;
             }
 
             for (var i = 0; i < objTree.children.length; i++) {
-                output += toString(objTree.children[i], indent + 4) + '';
+                output += toString(objTree.children[i], indent + 4) + "";
             }
 
             return output;
@@ -652,7 +637,7 @@ var msrCrypto = function () {
                     p = e.data;
 
                 if (!operations.exists(operation, e.data.algorithm.name)) {
-                    throw new Error('unregistered algorithm.');
+                    throw new Error("unregistered algorithm.");
                 }
 
                 if (p.operationSubType) {
@@ -715,56 +700,56 @@ var msrCrypto = function () {
 
             var algType = keyHandle.algorithm.name.slice(0, 3).toUpperCase();
 
-            if (algType === 'RSA') {
-                return 'RSA';
+            if (algType === "RSA") {
+                return "RSA";
             }
 
-            if (algType === 'ECD') {
-                return 'EC';
+            if (algType === "ECD") {
+                return "EC";
             }
 
-            return 'oct';
+            return "oct";
         }
 
         function hashSize(algorithm) {
-            return algorithm.hash.name.substring(algorithm.hash.name.indexOf('-') + 1);
+            return algorithm.hash.name.substring(algorithm.hash.name.indexOf("-") + 1);
         }
 
         var algorithmMap = {
 
-            'HMAC': function (algorithm) {
-                return 'HS' + hashSize(algorithm);
+            "HMAC": function (algorithm) {
+                return "HS" + hashSize(algorithm);
             },
 
-            'AES-CBC': function (algorithm) {
-                return 'A' + algorithm.length.toString() + 'CBC';
+            "AES-CBC": function (algorithm) {
+                return "A" + algorithm.length.toString() + "CBC";
             },
 
-            'AES-GCM': function (algorithm) {
-                return 'A' + algorithm.length.toString() + 'GCM';
+            "AES-GCM": function (algorithm) {
+                return "A" + algorithm.length.toString() + "GCM";
             },
 
-            'RSAES-PKCS1-V1_5': function (algorithm) {
-                return 'RSA1_5';
+            "RSAES-PKCS1-V1_5": function (algorithm) {
+                return "RSA1_5";
             },
 
-            'RSASSA-PKCS1-V1_5': function (algorithm) {
-                return 'RS' + hashSize(algorithm);
+            "RSASSA-PKCS1-V1_5": function (algorithm) {
+                return "RS" + hashSize(algorithm);
             },
 
-            'RSA-OAEP': function (algorithm) {
-                if (algorithm.hash.name.toUpperCase() === 'SHA-1') {
-                    return 'RSA-OAEP';
+            "RSA-OAEP": function (algorithm) {
+                if (algorithm.hash.name.toUpperCase() === "SHA-1") {
+                    return "RSA-OAEP";
                 }
-                return 'RSA-OAEP-' + hashSize(algorithm);
+                return "RSA-OAEP-" + hashSize(algorithm);
             },
 
-            'RSA-PSS': function (algorithm) {
-                return 'PS' + hashSize(algorithm);
+            "RSA-PSS": function (algorithm) {
+                return "PS" + hashSize(algorithm);
             },
 
-            'ECDSA': function (algorithm) {
-                return 'EC-' + algorithm.namedCurve.substring(algorithm.namedCurve.indexOf('-') + 1);
+            "ECDSA": function (algorithm) {
+                return "EC-" + algorithm.namedCurve.substring(algorithm.namedCurve.indexOf("-") + 1);
             }
         };
 
@@ -782,7 +767,7 @@ var msrCrypto = function () {
                 key.k = utils.toBase64(keyData, true);
             } else {
                 for (var property in keyData) {
-                    if (keyData[property].pop && property !== 'key_ops') {
+                    if (keyData[property].pop && property !== "key_ops") {
                         key[property] = utils.toBase64(keyData[property], true);
                     }
                 }
@@ -825,7 +810,7 @@ var msrCrypto = function () {
                 key.crv = keyHandle.algorithm.namedCurve;
             }
 
-            var stringData = JSON.stringify(key, null, '\t');
+            var stringData = JSON.stringify(key, null, "\t");
 
             return stringToArray(stringData);
         }
@@ -870,12 +855,12 @@ var msrCrypto = function () {
 
         function createArray(parameter) {
             var i, array = null;
-            if (!arguments.length || typeof arguments[0] === 'number') {
+            if (!arguments.length || typeof arguments[0] === "number") {
                 array = new Array(parameter);
                 for (i = 0; i < parameter; i += 1) {
                     array[i] = 0;
                 }
-            } else if (typeof arguments[0] === 'object') {
+            } else if (typeof arguments[0] === "object") {
                 array = new Array(parameter.length);
                 for (i = 0; i < parameter.length; i += 1) {
                     array[i] = parameter[i];
@@ -885,14 +870,14 @@ var msrCrypto = function () {
         }
 
         function stringToDigits(numberStr, radix) {
-            numberStr = numberStr.replace(/^\s+|\s+$/g, '');
+            numberStr = numberStr.replace(/^\s+|\s+$/g, "");
             var num = [0];
             var buffer = [0];
             radix = radix || 10;
             for (var i = 0; i < numberStr.length; i += 1) {
                 var char = parseInt(numberStr[i], radix);
                 if (isNaN(char)) {
-                    throw new Error('Failed to convert string to integer in radix ' + radix.toString());
+                    throw new Error("Failed to convert string to integer in radix " + radix.toString());
                 }
 
                 multiply(num, radix, buffer);
@@ -907,7 +892,7 @@ var msrCrypto = function () {
         function digitsToString(digits, radix) {
             radix = radix || 10;
             if (DIGIT_BASE <= radix) {
-                throw new Error('DIGIT_BASE is smaller than RADIX; cannot convert.');
+                throw new Error("DIGIT_BASE is smaller than RADIX; cannot convert.");
             }
 
             var wordLength = digits.length;
@@ -919,12 +904,12 @@ var msrCrypto = function () {
             var a = [];
             var i;
 
-            var sb = '';
-            var pad = '0';
+            var sb = "";
+            var pad = "0";
             divisor[0] = radix;
             while (Math.floor(DIGIT_BASE / divisor[0]) >= radix) {
                 divisor[0] = divisor[0] * radix;
-                pad = pad.concat('0');
+                pad = pad.concat("0");
             }
 
             for (i = 0; i < wordLength; i += 1) {
@@ -955,12 +940,12 @@ var msrCrypto = function () {
                 quotient = swap;
             } while (true);
 
-            while (sb.length !== 0 && sb[0] === '0') {
+            while (sb.length !== 0 && sb[0] === "0") {
                 sb = sb.substring(1, sb.length);
             }
 
             if (sb.length === 0) {
-                sb = '0';
+                sb = "0";
             }
 
             return sb;
@@ -1156,7 +1141,7 @@ var msrCrypto = function () {
             var i, j, byte1;
             var bytes = [0];
 
-            if (typeof trim === 'undefined') {
+            if (typeof trim === "undefined") {
                 trim = true;
             }
 
@@ -1183,7 +1168,7 @@ var msrCrypto = function () {
         }
 
         function intToDigits(value, numDigits) {
-            if (typeof numDigits === 'undefined') {
+            if (typeof numDigits === "undefined") {
                 if (value <= 1) {
                     numDigits = 1;
                 } else {
@@ -1251,7 +1236,7 @@ var msrCrypto = function () {
             if (bits === undefined) {
                 bits = 1;
             } else if (bits >= DIGIT_BITS || bits < 0) {
-                throw new Error('Invalid bit count for shiftRight');
+                throw new Error("Invalid bit count for shiftRight");
             }
             if (length === undefined) {
                 length = source.length;
@@ -1270,7 +1255,7 @@ var msrCrypto = function () {
             if (bits === undefined) {
                 bits = 1;
             } else if (bits >= DIGIT_BITS || bits < 0) {
-                throw new Error('bit count must be smaller than DIGIT_BITS and positive in shiftLeft');
+                throw new Error("bit count must be smaller than DIGIT_BITS and positive in shiftLeft");
             }
             if (length === undefined) {
                 length = source.length;
@@ -1323,7 +1308,7 @@ var msrCrypto = function () {
             if (minuend.length < subtrahend.length) {
                 s = mswIndex(subtrahend) + 1;
                 if (minuend.length < s) {
-                    throw new Error('Subtrahend is longer than minuend, not supported.');
+                    throw new Error("Subtrahend is longer than minuend, not supported.");
                 }
             }
             var i, carry = 0;
@@ -1344,7 +1329,7 @@ var msrCrypto = function () {
 
         function multiply(a, b, p) {
 
-            b = (typeof b === 'number') ? [b] : b;
+            b = (typeof b === "number") ? [b] : b;
 
             var i, j, k, l, c, t1, t2, alen = a.length,
                 blen = b.length,
@@ -1401,7 +1386,7 @@ var msrCrypto = function () {
                 quotient.length = 1;
                 return;
             } else if (n === 0 || (n === 1 && divisor[n - 1] === 0)) {
-                throw new Error('Division by zero.');
+                throw new Error("Division by zero.");
             } else if (n === 1) {
                 t = divisor[0];
                 rhat = 0;
@@ -2025,7 +2010,7 @@ var msrCrypto = function () {
                 var digits = bytesToDigits(bytes);
 
                 if (cryptoMath.compareDigits(digits, this.m_modulus) >= 0) {
-                    throw new Error('The number provided is not an element of this group');
+                    throw new Error("The number provided is not an element of this group");
                 }
 
                 normalizeDigitArray(digits, this.m_digitWidth, true);
@@ -2189,12 +2174,12 @@ var msrCrypto = function () {
 
         function createArray(parameter) {
             var i, array = null;
-            if (!arguments.length || typeof arguments[0] === 'number') {
+            if (!arguments.length || typeof arguments[0] === "number") {
                 array = [];
                 for (i = 0; i < parameter; i += 1) {
                     array[i] = 0;
                 }
-            } else if (typeof arguments[0] === 'object') {
+            } else if (typeof arguments[0] === "object") {
                 array = [];
                 for (i = 0; i < parameter.length; i += 1) {
                     array[i] = parameter[i];
@@ -2279,11 +2264,11 @@ var msrCrypto = function () {
         var EllipticCurvePointFp = function (curve, isInfinity, x, y, z, isInMontgomeryForm) {
             var returnObj;
 
-            if (typeof z === 'undefined') {
+            if (typeof z === "undefined") {
                 z = null;
             }
 
-            if (typeof isInMontgomeryForm === 'undefined') {
+            if (typeof isInMontgomeryForm === "undefined") {
                 isInMontgomeryForm = false;
             }
 
@@ -2332,7 +2317,7 @@ var msrCrypto = function () {
                 destination.isInfinity = source.isInfinity;
 
                 if (!destination.equals(source)) {
-                    throw new Error('Instances should be equal.');
+                    throw new Error("Instances should be equal.");
                 }
 
             }
@@ -2366,43 +2351,43 @@ var msrCrypto = function () {
                 }
             };
 
-            createProperty(returnObj, 'curve', curve, function () {
+            createProperty(returnObj, "curve", curve, function () {
                 return curve;
             }, function (val) {
                 curve = val;
             });
 
-            createProperty(returnObj, 'x', x, function () {
+            createProperty(returnObj, "x", x, function () {
                 return x;
             }, function (val) {
                 x = val;
             });
-            createProperty(returnObj, 'y', y, function () {
+            createProperty(returnObj, "y", y, function () {
                 return y;
             }, function (val) {
                 y = val;
             });
-            createProperty(returnObj, 'z', z, function () {
+            createProperty(returnObj, "z", z, function () {
                 return z;
             }, function (val) {
                 z = val;
             });
 
-            createProperty(returnObj, 'isInMontgomeryForm', isInMontgomeryForm,
+            createProperty(returnObj, "isInMontgomeryForm", isInMontgomeryForm,
                 function () {
                     return isInMontgomeryForm;
                 },
                 function (val) {
                     isInMontgomeryForm = val;
                 });
-            createProperty(returnObj, 'isInfinity', isInfinity,
+            createProperty(returnObj, "isInfinity", isInfinity,
                 function () {
                     return isInfinity;
                 },
                 function (val) {
                     isInfinity = val;
                 });
-            createProperty(returnObj, 'isAffine', z === null, function () {
+            createProperty(returnObj, "isAffine", z === null, function () {
                 return z === null;
             });
 
@@ -2602,7 +2587,7 @@ var msrCrypto = function () {
                 var validationPoint = generatorPoint.clone();
                 convertToStandardForm(validationPoint);
                 if (!validatePoint(validationPoint)) {
-                    throw new Error('Invalid Parameter');
+                    throw new Error("Invalid Parameter");
                 }
 
                 var pointJac = generatorPoint.clone();
@@ -2632,19 +2617,19 @@ var msrCrypto = function () {
             }
 
             function double(point, outputPoint) {
-                if (typeof point === 'undefined') {
-                    throw new Error('point undefined');
+                if (typeof point === "undefined") {
+                    throw new Error("point undefined");
                 }
-                if (typeof outputPoint === 'undefined') {
-                    throw new Error('outputPoint undefined');
+                if (typeof outputPoint === "undefined") {
+                    throw new Error("outputPoint undefined");
                 }
 
                 if (point.isAffine) {
-                    throw new Error('Given point was in Affine form. Use convertToJacobian() first.');
+                    throw new Error("Given point was in Affine form. Use convertToJacobian() first.");
                 }
 
                 if (!point.isInMontgomeryForm) {
-                    throw new Error('Given point must be in Montgomery form. Use montgomeryize() first.');
+                    throw new Error("Given point must be in Montgomery form. Use montgomeryize() first.");
                 }
                 if (aequalsZero) {
                     doubleAequals0(point, outputPoint);
@@ -2756,46 +2741,46 @@ var msrCrypto = function () {
 
             function mixedAdd(jacobianPoint, affinePoint, outputPoint) {
                 if (jacobianPoint === null) {
-                    throw new Error('jacobianPoint');
+                    throw new Error("jacobianPoint");
                 }
 
                 if (affinePoint === null) {
-                    throw new Error('affinePoint');
+                    throw new Error("affinePoint");
                 }
 
                 if (outputPoint === null) {
-                    throw new Error('outputPoint');
+                    throw new Error("outputPoint");
                 }
 
                 if (jacobianPoint.curve !== affinePoint.curve ||
                     jacobianPoint.curve !== outputPoint.curve) {
-                    throw new Error('All points must be from the same curve object.');
+                    throw new Error("All points must be from the same curve object.");
                 }
 
                 if (jacobianPoint.isAffine) {
                     throw new Error(
-                        'Given jacobianPoint was in Affine form. Use ConvertToJacobian()\
-                     before calling DoubleJacobianAddAffinePoints().');
+                        "Given jacobianPoint was in Affine form. Use ConvertToJacobian()\
+                     before calling DoubleJacobianAddAffinePoints().");
                 }
 
                 if (!affinePoint.isAffine) {
                     throw new Error(
-                        'Given affinePoint was in Jacobian form. Use ConvertToAffine() before \
-                     calling DoubleJacobianAddAffinePoints().');
+                        "Given affinePoint was in Jacobian form. Use ConvertToAffine() before \
+                     calling DoubleJacobianAddAffinePoints().");
                 }
 
                 if (outputPoint.isAffine) {
                     throw new Error(
-                        'Given jacobianPoint was in Jacobian form. Use ConvertToJacobian() before \
-                     calling DoubleJacobianAddAffinePoints().');
+                        "Given jacobianPoint was in Jacobian form. Use ConvertToJacobian() before \
+                     calling DoubleJacobianAddAffinePoints().");
                 }
 
                 if (!jacobianPoint.isInMontgomeryForm) {
-                    throw new Error('Jacobian point must be in Montgomery form');
+                    throw new Error("Jacobian point must be in Montgomery form");
                 }
 
                 if (!affinePoint.isInMontgomeryForm) {
-                    throw new Error('Affine point must be in Montgomery form');
+                    throw new Error("Affine point must be in Montgomery form");
                 }
 
                 if (jacobianPoint.isInfinity) {
@@ -2880,14 +2865,14 @@ var msrCrypto = function () {
                 }
 
                 if (cryptoMath.compareDigits(k, curve.order) >= 0) {
-                    throw new Error('The scalar k must be in the range 1 <= k < order.');
+                    throw new Error("The scalar k must be in the range 1 <= k < order.");
                 }
 
                 k = k.slice();
 
                 if (point.curve.type === 1) {
 
-                    var pointIsEP = typeof point.ta !== 'undefined';
+                    var pointIsEP = typeof point.ta !== "undefined";
 
                     if (!pointIsEP) {
                         convertToExtendedProjective(point);
@@ -2937,7 +2922,7 @@ var msrCrypto = function () {
                 convertToStandardForm(validationPoint);
 
                 if (!validatePoint(validationPoint)) {
-                    throw new Error('Invalid Parameters.');
+                    throw new Error("Invalid Parameters.");
                 }
 
                 var odd = k[0] & 1,
@@ -3027,7 +3012,7 @@ var msrCrypto = function () {
 
             function convertToMontgomeryForm(point) {
                 if (point.isInMontgomeryForm) {
-                    throw new Error('The given point is already in Montgomery form.');
+                    throw new Error("The given point is already in Montgomery form.");
                 }
 
                 if (!point.isInfinity) {
@@ -3038,7 +3023,7 @@ var msrCrypto = function () {
                         montgomeryMultiplier.convertToMontgomeryForm(point.z);
                     }
 
-                    if (typeof point.ta !== 'undefined') {
+                    if (typeof point.ta !== "undefined") {
                         montgomeryMultiplier.convertToMontgomeryForm(point.ta);
                         montgomeryMultiplier.convertToMontgomeryForm(point.tb);
                     }
@@ -3049,7 +3034,7 @@ var msrCrypto = function () {
 
             function convertToStandardForm(point) {
                 if (!point.isInMontgomeryForm) {
-                    throw new Error('The given point is not in montgomery form.');
+                    throw new Error("The given point is not in montgomery form.");
                 }
 
                 if (!point.isInfinity) {
@@ -3058,7 +3043,7 @@ var msrCrypto = function () {
                     if (point.z !== null) {
                         montgomeryMultiplier.convertToStandardForm(point.z);
                     }
-                    if (typeof point.ta !== 'undefined') {
+                    if (typeof point.ta !== "undefined") {
                         montgomeryMultiplier.convertToStandardForm(point.ta);
                         montgomeryMultiplier.convertToStandardForm(point.tb);
                     }
@@ -3104,7 +3089,7 @@ var msrCrypto = function () {
 
             function convertToJacobianForm(point) {
                 if (!point.isAffine) {
-                    throw new Error('The given point is not in Affine form.');
+                    throw new Error("The given point is not in Affine form.");
                 }
 
                 setterSupport || (point.isAffine = false);
@@ -3203,11 +3188,11 @@ var msrCrypto = function () {
             function scalarMultiplyTed(k, point, outputPoint, multiplyBy4) {
 
                 if (!validatePointTed(point)) {
-                    throw new Error('Invalid Parameter');
+                    throw new Error("Invalid Parameter");
                 }
 
                 var rbits = point.curve.rbits;
-                multiplyBy4 = typeof multiplyBy4 === 'undefined' ? true : multiplyBy4;
+                multiplyBy4 = typeof multiplyBy4 === "undefined" ? true : multiplyBy4;
 
                 var w = fieldElementWidth <= 8 ? 5 : 6;
 
@@ -3321,8 +3306,8 @@ var msrCrypto = function () {
 
             function doubleTed(point, outputPoint) {
 
-                if (typeof point.ta === 'undefined') {
-                    throw new Error('Point should be in Extended Projective form.');
+                if (typeof point.ta === "undefined") {
+                    throw new Error("Point should be in Extended Projective form.");
                 }
 
                 cryptoMath.modMul(point.x, point.x, point.curve.p, temp0);
@@ -3354,12 +3339,12 @@ var msrCrypto = function () {
 
                 var cm = cryptoMath;
 
-                if (typeof point1.ta === 'undefined') {
-                    throw new Error('Point1 should be in Extended Projective form.');
+                if (typeof point1.ta === "undefined") {
+                    throw new Error("Point1 should be in Extended Projective form.");
                 }
 
-                if (typeof point2.ta === 'undefined') {
-                    throw new Error('Point2 should be in Extended Projective form.');
+                if (typeof point2.ta === "undefined") {
+                    throw new Error("Point2 should be in Extended Projective form.");
                 }
                 var qq = convert_R1_to_R2(point1);
 
@@ -3589,15 +3574,15 @@ var msrCrypto = function () {
             return {
                 encodePoint: function (point) {
                     if (!point) {
-                        throw new Error('point');
+                        throw new Error("point");
                     }
 
                     if (!point.isAffine) {
-                        throw new Error('Point must be in affine form.');
+                        throw new Error("Point must be in affine form.");
                     }
 
                     if (point.isInMontgomeryForm) {
-                        throw new Error('Point must not be in Montgomery form.');
+                        throw new Error("Point must not be in Montgomery form.");
                     }
 
                     if (point.isInfinity) {
@@ -3608,7 +3593,7 @@ var msrCrypto = function () {
                         var pOctetString = cryptoMath.digitsToBytes(point.curve.p);
                         var mlen = pOctetString.length;
                         if (mlen < xOctetString.length || mlen < yOctetString.length) {
-                            throw new Error('Point coordinate(s) are bigger than the field order.');
+                            throw new Error("Point coordinate(s) are bigger than the field order.");
                         }
                         var output = createArray(2 * mlen + 1);
 
@@ -3628,7 +3613,7 @@ var msrCrypto = function () {
                 },
                 decodePoint: function (encoded, curve) {
                     if (encoded.length < 1) {
-                        throw new Error('Byte array must have non-zero length');
+                        throw new Error("Byte array must have non-zero length");
                     }
 
                     var pOctetString = cryptoMath.digitsToBytes(curve.p);
@@ -3650,7 +3635,7 @@ var msrCrypto = function () {
 
                         return EllipticCurvePointFp(curve, false, x, y);
                     } else {
-                        throw new Error('Unsupported encoding format');
+                        throw new Error("Unsupported encoding format");
                     }
                 }
             };
@@ -3661,12 +3646,12 @@ var msrCrypto = function () {
 
             var specialK = [];
 
-            if (typeof modulus === 'undefined') {
-                throw new Error('modulus');
+            if (typeof modulus === "undefined") {
+                throw new Error("modulus");
             }
 
             if (cryptoMath.isEven(modulus)) {
-                throw new Error('Only odd moduli are supported');
+                throw new Error("Only odd moduli are supported");
             }
 
             var mul = cryptoMath.MontgomeryMultiplier(p);
@@ -3701,7 +3686,7 @@ var msrCrypto = function () {
                     if (specialK !== null) {
                         return squareRootNistCurves(a);
                     } else {
-                        throw new Error('GeneralCase not supported.');
+                        throw new Error("GeneralCase not supported.");
                     }
                 },
 
@@ -3760,7 +3745,7 @@ var msrCrypto = function () {
             var curveData = curvesInternal[curveName.toUpperCase()];
 
             if (!curveData) {
-                throw new Error(curveName + ' Unsupported curve.');
+                throw new Error(curveName + " Unsupported curve.");
             }
 
             if (curveData.type === 0) {
@@ -3771,7 +3756,7 @@ var msrCrypto = function () {
                 return createTedCurve(curveData);
             }
 
-            throw new Error(curveName + ' Unsupported curve type.');
+            throw new Error(curveName + " Unsupported curve type.");
         };
 
         var validateEccPoint = function (curveName, x, y, z) {
@@ -3795,7 +3780,7 @@ var msrCrypto = function () {
     var cryptoECC = cryptoECC || MsrcryptoECC();
 
     var curve_P256 = {
-        name: 'P-256',
+        name: "P-256",
         type: 0,
         p: [0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
         a: [0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFC],
@@ -3807,7 +3792,7 @@ var msrCrypto = function () {
     };
 
     var curve_P384 = {
-        name: 'P-384',
+        name: "P-384",
         type: 0,
         p: [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF],
         a: [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFC],
@@ -3819,7 +3804,7 @@ var msrCrypto = function () {
     };
 
     var curve_P521 = {
-        name: 'P-521',
+        name: "P-521",
         type: 0,
         p: [0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
         a: [0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFC],
@@ -3830,14 +3815,14 @@ var msrCrypto = function () {
         cf: 1
     };
 
-    if (typeof cryptoECC !== 'undefined') {
-        cryptoECC.curves['P-256'] = curve_P256;
-        cryptoECC.curves['P-384'] = curve_P384;
-        cryptoECC.curves['P-521'] = curve_P521;
+    if (typeof cryptoECC !== "undefined") {
+        cryptoECC.curves["P-256"] = curve_P256;
+        cryptoECC.curves["P-384"] = curve_P384;
+        cryptoECC.curves["P-521"] = curve_P521;
     }
 
     var curve_BN254 = {
-        name: 'BN-254',
+        name: "BN-254",
         type: 0,
         p: [0x25, 0x23, 0x64, 0x82, 0x40, 0x00, 0x00, 0x01, 0xBA, 0x34, 0x4D, 0x80, 0x00, 0x00, 0x00, 0x08, 0x61, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00, 0x13, 0xA7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x13],
         a: [0x00],
@@ -3848,12 +3833,12 @@ var msrCrypto = function () {
         cf: 1
     };
 
-    if (typeof cryptoECC !== 'undefined') {
-        cryptoECC.curves['BN-254'] = curve_BN254;
+    if (typeof cryptoECC !== "undefined") {
+        cryptoECC.curves["BN-254"] = curve_BN254;
     }
 
     var curve_numsp256d1 = {
-        info: ['numsp256d1', 256, 256, 256],
+        info: ["numsp256d1", 256, 256, 256],
         type: 0,
         p: [0x43, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF].reverse(),
         a: [0x40, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF].reverse(),
@@ -3865,8 +3850,8 @@ var msrCrypto = function () {
     };
 
     var curve_numsp256t1 = {
-        info: ['numsp256t1', 256, 255, 256],
-        name: 'numsp256t1',
+        info: ["numsp256t1", 256, 255, 256],
+        name: "numsp256t1",
         type: 1,
         p: [0x43, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF].reverse(),
         a: [0x01],
@@ -3878,8 +3863,8 @@ var msrCrypto = function () {
     };
 
     var curve_numsp384d1 = {
-        info: ['numsp384d1', 384, 384, 384],
-        name: 'numsp384d1',
+        info: ["numsp384d1", 384, 384, 384],
+        name: "numsp384d1",
         type: 0,
         p: [0xC3, 0xFE, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
@@ -3903,8 +3888,8 @@ var msrCrypto = function () {
     };
 
     var curve_numsp384t1 = {
-        info: ['numsp384t1', 384, 382, 384],
-        name: 'numsp384t1',
+        info: ["numsp384t1", 384, 382, 384],
+        name: "numsp384t1",
         type: 1,
         p: [0xC3, 0xFE, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
@@ -3926,8 +3911,8 @@ var msrCrypto = function () {
     };
 
     var curve_numsp512d1 = {
-        info: ['numsp512d1', 512, 512, 512],
-        name: 'numsp512d1',
+        info: ["numsp512d1", 512, 512, 512],
+        name: "numsp512d1",
         type: 0,
         p: [0xC7, 0xFD, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
@@ -3949,8 +3934,8 @@ var msrCrypto = function () {
     };
 
     var curve_numsp512t1 = {
-        info: ['numsp512t1', 512, 510, 512],
-        name: 'numsp512t1',
+        info: ["numsp512t1", 512, 510, 512],
+        name: "numsp512t1",
         type: 1,
         p: [0xC7, 0xFD, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
@@ -3971,7 +3956,7 @@ var msrCrypto = function () {
         cf: 4
     };
 
-    if (typeof cryptoECC !== 'undefined') {
+    if (typeof cryptoECC !== "undefined") {
         cryptoECC.curves.NUMSP256D1 = curve_numsp256d1;
         cryptoECC.curves.NUMSP384D1 = curve_numsp384d1;
         cryptoECC.curves.NUMSP512D1 = curve_numsp512d1;
@@ -4049,7 +4034,7 @@ var msrCrypto = function () {
 
         function finish() {
             if (hashBlocks(addPadding(buffer)).length !== 0) {
-                throw new Error('buffer.length !== 0');
+                throw new Error("buffer.length !== 0");
             }
 
             var result = hashToBytes();
@@ -4126,19 +4111,19 @@ var msrCrypto = function () {
 
         var utils = msrcryptoUtilities,
             upd = utils.unpackData,
-            h = upd('Z0UjAe/Nq4mYutz+EDJUdsPS4fA=', 4, 1),
-            k = upd('WoJ5mVqCeZlagnmZWoJ5mVqCeZlagnmZWoJ5mVqCeZlagnmZWoJ5mVqCeZlagnmZWoJ5mVqCeZlagnmZWoJ5mVqCeZlagnmZWoJ5mVqCeZlu2euhbtnroW7Z66Fu2euhbtnroW7Z66Fu2euhbtnroW7Z66Fu2euhbtnroW7Z66Fu2euhbtnroW7Z66Fu2euhbtnroW7Z66Fu2euhbtnroY8bvNyPG7zcjxu83I8bvNyPG7zcjxu83I8bvNyPG7zcjxu83I8bvNyPG7zcjxu83I8bvNyPG7zcjxu83I8bvNyPG7zcjxu83I8bvNyPG7zcymLB1spiwdbKYsHWymLB1spiwdbKYsHWymLB1spiwdbKYsHWymLB1spiwdbKYsHWymLB1spiwdbKYsHWymLB1spiwdbKYsHWymLB1spiwdY', 4, 1),
-            der = upd('MCEwCQYFKw4DAhoFAAQU');
+            h = upd("Z0UjAe/Nq4mYutz+EDJUdsPS4fA=", 4, 1),
+            k = upd("WoJ5mVqCeZlagnmZWoJ5mVqCeZlagnmZWoJ5mVqCeZlagnmZWoJ5mVqCeZlagnmZWoJ5mVqCeZlagnmZWoJ5mVqCeZlagnmZWoJ5mVqCeZlu2euhbtnroW7Z66Fu2euhbtnroW7Z66Fu2euhbtnroW7Z66Fu2euhbtnroW7Z66Fu2euhbtnroW7Z66Fu2euhbtnroW7Z66Fu2euhbtnroY8bvNyPG7zcjxu83I8bvNyPG7zcjxu83I8bvNyPG7zcjxu83I8bvNyPG7zcjxu83I8bvNyPG7zcjxu83I8bvNyPG7zcjxu83I8bvNyPG7zcymLB1spiwdbKYsHWymLB1spiwdbKYsHWymLB1spiwdbKYsHWymLB1spiwdbKYsHWymLB1spiwdbKYsHWymLB1spiwdbKYsHWymLB1spiwdY", 4, 1),
+            der = upd("MCEwCQYFKw4DAhoFAAQU");
 
         return {
             sha1: function () {
-                return msrcryptoSha('SHA-1', der, h, k, 64, hashBlock, 160);
+                return msrcryptoSha("SHA-1", der, h, k, 64, hashBlock, 160);
             }
         };
 
     })();
 
-    if (typeof operations !== 'undefined') {
+    if (typeof operations !== "undefined") {
 
         msrcryptoSha1.instances = {};
 
@@ -4153,12 +4138,12 @@ var msrCrypto = function () {
 
         msrcryptoSha1.hash = function (p) {
 
-            if (p.operationSubType === 'process') {
+            if (p.operationSubType === "process") {
                 msrcryptoSha1.sha1.process(p.buffer);
                 return;
             }
 
-            if (p.operationSubType === 'finish') {
+            if (p.operationSubType === "finish") {
                 return msrcryptoSha1.sha1.finish();
             }
 
@@ -4166,11 +4151,11 @@ var msrCrypto = function () {
 
         };
 
-        operations.register('digest', 'SHA-1', msrcryptoSha1.hash);
+        operations.register("digest", "SHA-1", msrcryptoSha1.hash);
 
     }
 
-    msrcryptoHashFunctions['SHA-1'] = msrcryptoSha1.sha1;
+    msrcryptoHashFunctions["SHA-1"] = msrcryptoSha1.sha1;
 
     var msrcryptoSha256 = (function () {
 
@@ -4243,27 +4228,27 @@ var msrCrypto = function () {
 
         var k256, h224, h256, der224, der256, upd = utils.unpackData;
 
-        h224 = upd('wQWe2DZ81QcwcN0X9w5ZOf/ACzFoWBURZPmPp776T6Q', 4, 1);
+        h224 = upd("wQWe2DZ81QcwcN0X9w5ZOf/ACzFoWBURZPmPp776T6Q", 4, 1);
 
-        h256 = upd('agnmZ7tnroU8bvNypU/1OlEOUn+bBWiMH4PZq1vgzRk', 4, 1);
+        h256 = upd("agnmZ7tnroU8bvNypU/1OlEOUn+bBWiMH4PZq1vgzRk", 4, 1);
 
-        k256 = upd('QoovmHE3RJG1wPvP6bXbpTlWwltZ8RHxkj+CpKscXtXYB6qYEoNbASQxhb5VDH3Dcr5ddIDesf6b3AanwZvxdOSbacHvvkeGD8GdxiQMocwt6SxvSnSEqlywqdx2+YjamD5RUqgxxm2wAyfIv1l/x8bgC/PVp5FHBspjURQpKWcntwqFLhshOE0sbfxTOA0TZQpzVHZqCruBwskuknIshaK/6KGoGmZLwkuLcMdsUaPRkugZ1pkGJPQONYUQaqBwGaTBFh43bAgnSHdMNLC8tTkcDLNO2KpKW5zKT2gub/N0j4LueKVjb4TIeBSMxwIIkL7/+qRQbOu++aP3xnF48g', 4, 1);
+        k256 = upd("QoovmHE3RJG1wPvP6bXbpTlWwltZ8RHxkj+CpKscXtXYB6qYEoNbASQxhb5VDH3Dcr5ddIDesf6b3AanwZvxdOSbacHvvkeGD8GdxiQMocwt6SxvSnSEqlywqdx2+YjamD5RUqgxxm2wAyfIv1l/x8bgC/PVp5FHBspjURQpKWcntwqFLhshOE0sbfxTOA0TZQpzVHZqCruBwskuknIshaK/6KGoGmZLwkuLcMdsUaPRkugZ1pkGJPQONYUQaqBwGaTBFh43bAgnSHdMNLC8tTkcDLNO2KpKW5zKT2gub/N0j4LueKVjb4TIeBSMxwIIkL7/+qRQbOu++aP3xnF48g", 4, 1);
 
-        der224 = upd('MC0wDQYJYIZIAWUDBAIEBQAEHA');
+        der224 = upd("MC0wDQYJYIZIAWUDBAIEBQAEHA");
 
-        der256 = upd('MDEwDQYJYIZIAWUDBAIBBQAEIA');
+        der256 = upd("MDEwDQYJYIZIAWUDBAIBBQAEIA");
 
         return {
             sha224: function () {
-                return msrcryptoSha('SHA-224', der224, h224, k256, 64, hashBlock, 224);
+                return msrcryptoSha("SHA-224", der224, h224, k256, 64, hashBlock, 224);
             },
             sha256: function () {
-                return msrcryptoSha('SHA-256', der256, h256, k256, 64, hashBlock, 256);
+                return msrcryptoSha("SHA-256", der256, h256, k256, 64, hashBlock, 256);
             }
         };
     })();
 
-    if (typeof operations !== 'undefined') {
+    if (typeof operations !== "undefined") {
 
         msrcryptoSha256.instance224 = msrcryptoSha256.instance224 || msrcryptoSha256.sha224();
         msrcryptoSha256.instance256 = msrcryptoSha256.instance256 || msrcryptoSha256.sha256();
@@ -4285,19 +4270,19 @@ var msrCrypto = function () {
 
         msrcryptoSha256.hash256 = function (p) {
 
-            if (p.operationSubType === 'process') {
+            if (p.operationSubType === "process") {
                 msrcryptoSha256.getInstance256(p.workerid).process(p.buffer);
                 return null;
             }
 
-            if (p.operationSubType === 'finish') {
+            if (p.operationSubType === "finish") {
 
                 var result = msrcryptoSha256.getInstance256(p.workerid).finish();
                 msrcryptoSha256.deleteInstance(p.workerid);
                 return result;
             }
 
-            if (p.operationSubType === 'abort') {
+            if (p.operationSubType === "abort") {
                 msrcryptoSha256.deleteInstance(p.workerid);
                 return;
             }
@@ -4308,16 +4293,16 @@ var msrCrypto = function () {
 
         msrcryptoSha256.hash224 = function (p) {
 
-            if (p.operationSubType === 'process') {
+            if (p.operationSubType === "process") {
                 msrcryptoSha256.getInstance224(p.workerid).process(p.buffer);
                 return;
             }
 
-            if (p.operationSubType === 'finish') {
+            if (p.operationSubType === "finish") {
                 var result = msrcryptoSha256.getInstance224(p.workerid).finish();
             }
 
-            if (p.operationSubType === 'abort') {
+            if (p.operationSubType === "abort") {
                 msrcryptoSha224.deleteInstance(p.workerid);
                 return;
             }
@@ -4326,12 +4311,12 @@ var msrCrypto = function () {
 
         };
 
-        operations.register('digest', 'SHA-224', msrcryptoSha256.hash224);
-        operations.register('digest', 'SHA-256', msrcryptoSha256.hash256);
+        operations.register("digest", "SHA-224", msrcryptoSha256.hash224);
+        operations.register("digest", "SHA-256", msrcryptoSha256.hash256);
     }
 
-    msrcryptoHashFunctions['SHA-224'] = msrcryptoSha256.sha224;
-    msrcryptoHashFunctions['SHA-256'] = msrcryptoSha256.sha256;
+    msrcryptoHashFunctions["SHA-224"] = msrcryptoSha256.sha224;
+    msrcryptoHashFunctions["SHA-256"] = msrcryptoSha256.sha256;
 
     var msrcryptoSha512 = (function () {
 
@@ -4495,46 +4480,46 @@ var msrCrypto = function () {
             der384, der512, der512_224, der512_256,
             upd = utils.unpackData;
 
-        h384 = upd('y7udXcEFnthimikqNnzVB5FZAVowcN0XFS/s2PcOWTlnMyZn/8ALMY60SodoWBUR2wwuDWT5j6dHtUgdvvpPpA==', 4, 1);
+        h384 = upd("y7udXcEFnthimikqNnzVB5FZAVowcN0XFS/s2PcOWTlnMyZn/8ALMY60SodoWBUR2wwuDWT5j6dHtUgdvvpPpA==", 4, 1);
 
-        h512 = upd('agnmZ/O8yQi7Z66FhMqnOzxu83L+lPgrpU/1Ol8dNvFRDlJ/reaC0ZsFaIwrPmwfH4PZq/tBvWtb4M0ZE34heQ', 4, 1);
+        h512 = upd("agnmZ/O8yQi7Z66FhMqnOzxu83L+lPgrpU/1Ol8dNvFRDlJ/reaC0ZsFaIwrPmwfH4PZq/tBvWtb4M0ZE34heQ", 4, 1);
 
         k512 = upd(
-            'QoovmNcoriJxN0SRI+9lzbXA+8/sTTsv6bXbpYGJ27w5VsJb80i1OFnxEfG2BdAZkj+CpK8ZT5urHF7' +
-            'V2m2BGNgHqpijAwJCEoNbAUVwb74kMYW+TuSyjFUMfcPV/7Ticr5ddPJ7iW+A3rH+OxaWsZvcBqclxx' +
-            'I1wZvxdM9pJpTkm2nBnvFK0u++R4Y4TyXjD8GdxouM1bUkDKHMd6ycZS3pLG9ZKwJ1SnSEqm6m5INcs' +
-            'KncvUH71Hb5iNqDEVO1mD5RUu5m36uoMcZtLbQyELADJ8iY+yE/v1l/x77vDuTG4AvzPaiPwtWnkUeT' +
-            'CqclBspjUeADgm8UKSlnCg5ucCe3CoVG0i/8LhshOFwmySZNLG38WsQq7VM4DROdlbPfZQpzVIuvY95' +
-            '2agq7PHeyqIHCyS5H7a7mknIshRSCNTuiv+ihTPEDZKgaZku8QjABwkuLcND4l5HHbFGjBlS+MNGS6B' +
-            'nW71IY1pkGJFVlqRD0DjWFV3EgKhBqoHAyu9G4GaTBFrjS0MgeN2wIUUGrUydId0zfjuuZNLC8teGbS' +
-            'Kg5HAyzxclaY07YqkrjQYrLW5zKT3dj43NoLm/z1rK4o3SPgu5d77L8eKVjb0MXL2CEyHgUofCrcozH' +
-            'AggaZDnskL7/+iNjHiikUGzr3oK96b75o/eyxnkVxnF48uNyUyvKJz7O6iZhnNGGuMchwMIH6tp91s3' +
-            'g6x71fU9/7m7ReAbwZ6pyF2+6CmN9xaLImKYRP5gEvvkNrhtxCzUTHEcbKNt39SMEfYQyyqt7QMckkz' +
-            'yevgoVyb68Qx1nxJwQDUxMxdS+yz5Ctll/KZz8ZX4qX8tvqzrW+uxsRBmMSkdYFw==', 4, 1);
+            "QoovmNcoriJxN0SRI+9lzbXA+8/sTTsv6bXbpYGJ27w5VsJb80i1OFnxEfG2BdAZkj+CpK8ZT5urHF7" +
+            "V2m2BGNgHqpijAwJCEoNbAUVwb74kMYW+TuSyjFUMfcPV/7Ticr5ddPJ7iW+A3rH+OxaWsZvcBqclxx" +
+            "I1wZvxdM9pJpTkm2nBnvFK0u++R4Y4TyXjD8GdxouM1bUkDKHMd6ycZS3pLG9ZKwJ1SnSEqm6m5INcs" +
+            "KncvUH71Hb5iNqDEVO1mD5RUu5m36uoMcZtLbQyELADJ8iY+yE/v1l/x77vDuTG4AvzPaiPwtWnkUeT" +
+            "CqclBspjUeADgm8UKSlnCg5ucCe3CoVG0i/8LhshOFwmySZNLG38WsQq7VM4DROdlbPfZQpzVIuvY95" +
+            "2agq7PHeyqIHCyS5H7a7mknIshRSCNTuiv+ihTPEDZKgaZku8QjABwkuLcND4l5HHbFGjBlS+MNGS6B" +
+            "nW71IY1pkGJFVlqRD0DjWFV3EgKhBqoHAyu9G4GaTBFrjS0MgeN2wIUUGrUydId0zfjuuZNLC8teGbS" +
+            "Kg5HAyzxclaY07YqkrjQYrLW5zKT3dj43NoLm/z1rK4o3SPgu5d77L8eKVjb0MXL2CEyHgUofCrcozH" +
+            "AggaZDnskL7/+iNjHiikUGzr3oK96b75o/eyxnkVxnF48uNyUyvKJz7O6iZhnNGGuMchwMIH6tp91s3" +
+            "g6x71fU9/7m7ReAbwZ6pyF2+6CmN9xaLImKYRP5gEvvkNrhtxCzUTHEcbKNt39SMEfYQyyqt7QMckkz" +
+            "yevgoVyb68Qx1nxJwQDUxMxdS+yz5Ctll/KZz8ZX4qX8tvqzrW+uxsRBmMSkdYFw==", 4, 1);
 
-        der384 = upd('MEEwDQYJYIZIAWUDBAICBQAEMA');
-        der512 = upd('MFEwDQYJYIZIAWUDBAIDBQAEQA');
-        der512_224 = upd('MC0wDQYJYIZIAWUDBAIFBQAEHA');
-        der512_256 = upd('MDEwDQYJYIZIAWUDBAIGBQAEIA');
+        der384 = upd("MEEwDQYJYIZIAWUDBAICBQAEMA");
+        der512 = upd("MFEwDQYJYIZIAWUDBAIDBQAEQA");
+        der512_224 = upd("MC0wDQYJYIZIAWUDBAIFBQAEHA");
+        der512_256 = upd("MDEwDQYJYIZIAWUDBAIGBQAEIA");
 
         return {
             sha384: function () {
-                return msrcryptoSha('SHA-384', der384, h384, k512, 128, hashBlock, 384);
+                return msrcryptoSha("SHA-384", der384, h384, k512, 128, hashBlock, 384);
             },
             sha512: function () {
-                return msrcryptoSha('SHA-512', der512, h512, k512, 128, hashBlock, 512);
+                return msrcryptoSha("SHA-512", der512, h512, k512, 128, hashBlock, 512);
             },
             sha512_224: function () {
-                return msrcryptoSha('SHA-512.224', der512_224, h512, k512, 128, hashBlock, 224);
+                return msrcryptoSha("SHA-512.224", der512_224, h512, k512, 128, hashBlock, 224);
             },
             sha512_256: function () {
-                return msrcryptoSha('SHA-512.256', der512_256, h512, k512, 128, hashBlock, 256);
+                return msrcryptoSha("SHA-512.256", der512_256, h512, k512, 128, hashBlock, 256);
             }
         };
 
     })();
 
-    if (typeof operations !== 'undefined') {
+    if (typeof operations !== "undefined") {
 
         msrcryptoSha512.instances = {};
 
@@ -4553,12 +4538,12 @@ var msrCrypto = function () {
 
         msrcryptoSha512.hash384 = function (p) {
 
-            if (p.operationSubType === 'process') {
+            if (p.operationSubType === "process") {
                 msrcryptoSha512.sha384.process(p.buffer);
                 return;
             }
 
-            if (p.operationSubType === 'finish') {
+            if (p.operationSubType === "finish") {
                 return msrcryptoSha512.sha384.finish();
             }
 
@@ -4568,12 +4553,12 @@ var msrCrypto = function () {
 
         msrcryptoSha512.hash512 = function (p) {
 
-            if (p.operationSubType === 'process') {
+            if (p.operationSubType === "process") {
                 msrcryptoSha512.sha512.process(p.buffer);
                 return;
             }
 
-            if (p.operationSubType === 'finish') {
+            if (p.operationSubType === "finish") {
                 return msrcryptoSha512.sha512.finish();
             }
 
@@ -4581,19 +4566,19 @@ var msrCrypto = function () {
 
         };
 
-        operations.register('digest', 'SHA-384', msrcryptoSha512.hash384);
-        operations.register('digest', 'SHA-512', msrcryptoSha512.hash512);
+        operations.register("digest", "SHA-384", msrcryptoSha512.hash384);
+        operations.register("digest", "SHA-512", msrcryptoSha512.hash512);
     }
 
-    msrcryptoHashFunctions['SHA-384'] = msrcryptoSha512.sha384;
-    msrcryptoHashFunctions['SHA-512'] = msrcryptoSha512.sha512;
+    msrcryptoHashFunctions["SHA-384"] = msrcryptoSha512.sha384;
+    msrcryptoHashFunctions["SHA-512"] = msrcryptoSha512.sha512;
 
     var msrcryptoHmac = function (keyBytes, hashFunction) {
 
         var blockSize = {
-            384: 128,
-            512: 128
-        }[hashFunction.name.replace(/SHA-/, '')] || 64;
+            "384": 128,
+            "512": 128
+        }[hashFunction.name.replace(/SHA-/, "")] || 64;
         var ipad;
         var opad;
         var paddedKey = padKey();
@@ -4688,7 +4673,7 @@ var msrCrypto = function () {
         };
     };
 
-    if (typeof operations !== 'undefined') {
+    if (typeof operations !== "undefined") {
 
         var hmacInstances = {};
 
@@ -4703,12 +4688,12 @@ var msrCrypto = function () {
                 hmacInstances[id] = msrcryptoHmac(p.keyData, hashAlg);
             }
 
-            if (p.operationSubType === 'process') {
+            if (p.operationSubType === "process") {
                 hmacInstances[id].process(p.buffer);
                 return null;
             }
 
-            if (p.operationSubType === 'finish') {
+            if (p.operationSubType === "finish") {
                 result = hmacInstances[id].finish();
                 hmacInstances[id] = null;
                 return result;
@@ -4730,12 +4715,12 @@ var msrCrypto = function () {
                 hmacInstances[id] = msrcryptoHmac(p.keyData, hashAlg);
             }
 
-            if (p.operationSubType === 'process') {
+            if (p.operationSubType === "process") {
                 hmacInstances[id].process(p.buffer);
                 return null;
             }
 
-            if (p.operationSubType === 'finish') {
+            if (p.operationSubType === "finish") {
                 result = hmacInstances[id].finish();
                 result = msrcryptoUtilities.arraysEqual(result, p.signature);
                 hmacInstances[id] = null;
@@ -4751,11 +4736,11 @@ var msrCrypto = function () {
         msrcryptoHmac.generateKey = function (p) {
 
             var defaultKeyLengths = {
-                'SHA-1': 64,
-                'SHA-224': 64,
-                'SHA-256': 64,
-                'SHA-384': 128,
-                'SHA-512': 128
+                "SHA-1": 64,
+                "SHA-224": 64,
+                "SHA-256": 64,
+                "SHA-384": 128,
+                "SHA-512": 128
             };
 
             var keyLength = p.algorithm.length;
@@ -4765,45 +4750,45 @@ var msrCrypto = function () {
             }
 
             return {
-                type: 'keyGeneration',
+                type: "keyGeneration",
                 keyData: msrcryptoPseudoRandom.getBytes(keyLength),
                 keyHandle: {
                     algorithm: p.algorithm,
                     extractable: p.extractable,
                     usages: null || p.usages,
-                    type: 'secret'
+                    type: "secret"
                 }
             };
         };
 
         msrcryptoHmac.importKey = function (p) {
-            var keyObject = {};
-            var keyBits = p.keyData.length * 8;
+            var keyObject,
+                keyBits = p.keyData.length * 8;
 
-            if (p.format === 'jwk') {
-                keyObject = msrcryptoJwk.jwkToKey(p.keyData, p.algorithm, ['k']);
-                keyObject.alg = keyObject.alg.replace('HS', 'SHA-');
-            } else if (p.format === 'raw') {
+            if (p.format === "jwk") {
+                keyObject = msrcryptoJwk.jwkToKey(p.keyData, p.algorithm, ["k"]);
+                keyObject.alg = keyObject.alg.replace("HS", "SHA-");
+            } else if (p.format === "raw") {
                 keyObject = {
                     k: msrcryptoUtilities.toArray(p.keyData)
                 };
             } else {
-                throw new Error('unsupported import format');
+                throw new Error("unsupported import format");
             }
 
             return {
-                type: 'keyImport',
+                type: "keyImport",
                 keyData: keyObject.k,
                 keyHandle: {
                     algorithm: {
-                        name: 'HMAC',
+                        name: "HMAC",
                         hash: {
                             name: p.algorithm.hash.name
                         }
                     },
                     extractable: p.extractable || keyObject.extractable,
                     usages: p.usages,
-                    type: 'secret'
+                    type: "secret"
                 }
             };
 
@@ -4811,28 +4796,28 @@ var msrCrypto = function () {
 
         msrcryptoHmac.exportKey = function (p) {
 
-            if (p.format === 'jwk') {
+            if (p.format === "jwk") {
                 return {
-                    type: 'keyExport',
+                    type: "keyExport",
                     keyHandle: msrcryptoJwk.keyToJwk(p.keyHandle, p.keyData)
                 };
             }
 
-            if (p.format === 'raw') {
+            if (p.format === "raw") {
                 return {
-                    type: 'keyExport',
+                    type: "keyExport",
                     keyHandle: p.keyData
                 };
             }
 
-            throw new Error('unsupported export format');
+            throw new Error("unsupported export format");
         };
 
-        operations.register('importKey', 'HMAC', msrcryptoHmac.importKey);
-        operations.register('exportKey', 'HMAC', msrcryptoHmac.exportKey);
-        operations.register('generateKey', 'HMAC', msrcryptoHmac.generateKey);
-        operations.register('sign', 'HMAC', msrcryptoHmac.signHmac);
-        operations.register('verify', 'HMAC', msrcryptoHmac.verifyHmac);
+        operations.register("importKey", "HMAC", msrcryptoHmac.importKey);
+        operations.register("exportKey", "HMAC", msrcryptoHmac.exportKey);
+        operations.register("generateKey", "HMAC", msrcryptoHmac.generateKey);
+        operations.register("sign", "HMAC", msrcryptoHmac.signHmac);
+        operations.register("verify", "HMAC", msrcryptoHmac.verifyHmac);
     }
 
     var msrcryptoBlockCipher = (function () {
@@ -4853,7 +4838,7 @@ var msrCrypto = function () {
             aes: function (keyBytes) {
 
                 if (!aesConstants) {
-                    aesConstants = msrcryptoUtilities.unpackData('AAIEBggKDA4QEhQWGBocHiAiJCYoKiwuMDI0Njg6PD5AQkRGSEpMTlBSVFZYWlxeYGJkZmhqbG5wcnR2eHp8foCChIaIioyOkJKUlpianJ6goqSmqKqsrrCytLa4ury+wMLExsjKzM7Q0tTW2Nrc3uDi5Obo6uzu8PL09vj6/P4bGR8dExEXFQsJDw0DAQcFOzk/PTMxNzUrKS8tIyEnJVtZX11TUVdVS0lPTUNBR0V7eX99c3F3dWtpb21jYWdlm5mfnZORl5WLiY+Ng4GHhbu5v72zsbe1q6mvraOhp6Xb2d/d09HX1cvJz83DwcfF+/n//fPx9/Xr6e/t4+Hn5QADBgUMDwoJGBseHRQXEhEwMzY1PD86OSgrLi0kJyIhYGNmZWxvaml4e359dHdycVBTVlVcX1pZSEtOTURHQkHAw8bFzM/Kydjb3t3U19LR8PP29fz/+vno6+7t5Ofi4aCjpqWsr6qpuLu+vbS3srGQk5aVnJ+amYiLjo2Eh4KBm5idnpeUkZKDgIWGj4yJiquora6npKGis7C1tr+8ubr7+P3+9/Tx8uPg5ebv7Onqy8jNzsfEwcLT0NXW39zZ2ltYXV5XVFFSQ0BFRk9MSUpraG1uZ2RhYnNwdXZ/fHl6Ozg9Pjc0MTIjICUmLywpKgsIDQ4HBAECExAVFh8cGRoADhwSODYkKnB+bGJIRlRa4O788tjWxMqQnoyCqKa0utvVx8nj7f/xq6W3uZOdj4E7NScpAw0fEUtFV1lzfW9hraOxv5WbiYfd08HP5ev5901DUV91e2lnPTMhLwULGRd2eGpkTkBSXAYIGhQ+MCIslpiKhK6gsrzm6Pr03tDCzEFPXVN5d2VrMT8tIwkHFRuhr72zmZeFi9HfzcPp5/X7mpSGiKKsvrDq5Pb40tzOwHp0ZmhCTF5QCgQWGDI8LiDs4vD+1NrIxpySgI6kqri2DAIQHjQ6KCZ8cmBuREpYVjc5KyUPARMdR0lbVX9xY23X2cvF7+Hz/aepu7WfkYONAA0aFzQ5LiNoZXJ/XFFGS9Ddysfk6f7zuLWir4yBlpu7tqGsj4KVmNPeycTn6v3wa2ZxfF9SRUgDDhkUNzotIG1gd3pZVENOBQgfEjE8Kya9sKeqiYSTntXYz8Lh7Pv21tvMweLv+PW+s6SpioeQnQYLHBEyPyglbmN0eVpXQE3a18DN7uP0+bK/qKWGi5yRCgcQHT4zJClib3h1VltMQWFse3ZVWE9CCQQTHj0wJyqxvKumhYifktnUw87t4Pf6t7qtoIOOmZTf0sXI6+bx/GdqfXBTXklEDwIVGDs2ISwMARYbODUiL2RpfnNQXUpH3NHGy+jl8v+0ua6jgI2alwALFh0sJzoxWFNORXR/Ymmwu6atnJeKgejj/vXEz9LZe3BtZldcQUojKDU+DwQZEsvA3dbn7PH6k5iFjr+0qaL2/eDr2tHMx66luLOCiZSfRk1QW2phfHceFQgDMjkkL42Gm5Chqre81d7DyPny7+Q9NisgERoHDGVuc3hJQl9U9/zh6tvQzcavpLmyg4iVnkdMUVprYH12HxQJAjM4JS6Mh5qRoKu2vdTfwsn48+7lPDcqIRAbBg1kb3J5SENeVQEKFxwtJjswWVJPRHV+Y2ixuqesnZaLgOni//TFztPYenFsZ1ZdQEsiKTQ/DgUYE8rB3Nfm7fD7kpmEj761qKMACRIbJC02P0hBWlNsZX53kJmCi7S9pq/Y0crD/PXu5zsyKSAfFg0Ec3phaFdeRUyrormwj4adlOPq8fjHztXcdn9kbVJbQEk+NywlGhMIAebv9P3Cy9DZrqe8tYqDmJFNRF9WaWB7cgUMFx4hKDM63dTPxvnw6+KVnIeOsbijquzl/vfIwdrTpK22v4CJkpt8dW5nWFFKQzQ9Ji8QGQIL197FzPP64eiflo2Eu7KpoEdOVVxjanF4DwYdFCsiOTCak4iBvrespdLbwMn2/+TtCgMYES4nPDVCS1BZZm90faGos7qFjJee6eD78s3E39YxOCMqFRwHDnlwa2JdVE9GY3x3e/Jrb8UwAWcr/terdsqCyX36WUfwrdSir5ykcsC3/ZMmNj/3zDSl5fFx2DEVBMcjwxiWBZoHEoDi6yeydQmDLBobblqgUjvWsynjL4RT0QDtIPyxW2rLvjlKTFjP0O+q+0NNM4VF+QJ/UDyfqFGjQI+SnTj1vLbaIRD/89LNDBPsX5dEF8Snfj1kXRlzYIFP3CIqkIhG7rgU3l4L2+AyOgpJBiRcwtOsYpGV5HnnyDdtjdVOqWxW9Opleq4IunglLhymtMbo3XQfS72LinA+tWZIA/YOYTVXuYbBHZ7h+JgRadmOlJseh+nOVSjfjKGJDb/mQmhBmS0PsFS7FlIJatUwNqU4v0CjnoHz1/t84zmCmy//hzSOQ0TE3unLVHuUMqbCIz3uTJULQvrDTgguoWYo2SSydluiSW2L0SVy+PZkhmiYFtSkXMxdZbaSbHBIUP3tudpeFUZXp42dhJDYqwCMvNMK9+RYBbizRQbQLB6Pyj8PAsGvvQMBE4prOpERQU9n3OqX8s/O8LTmc5asdCLnrTWF4vk36Bx1325H8RpxHSnFiW+3Yg6qGL4b/FY+S8bSeSCa28D+eM1a9B/dqDOIB8cxsRIQWSeA7F9gUX+pGbVKDS3lep+TyZzvoOA7Ta4q9bDI67s8g1OZYRcrBH66d9Ym4WkUY1UhDH2NAQIECBAgQIAbNmzYq02aL168Y8aXNWrUs33678WROXLk071hwp8lSpQzZsyDHTp06MuNAQIECBAgQIAbNmzYq02aL168Y8aXNWrUs33678WROXLk071hwp8lSpQzZsyDHTp06MuNAQIECBAgQIAbNmzYq02aL168Y8aXNWrUs33678WROXLk071hwp8lSpQzZsyDHTp06MuNAQIECBAgQIAbNmzYq02aL168Y8aXNWrUs33678WROXLk071hwp8lSpQzZsyDHTp06MuNAQIECBAgQIAbNmzYq02aL168Y8aXNWrUs33678WROXLk071hwp8lSpQzZsyDHTp06MuN', 256, false);
+                    aesConstants = msrcryptoUtilities.unpackData("AAIEBggKDA4QEhQWGBocHiAiJCYoKiwuMDI0Njg6PD5AQkRGSEpMTlBSVFZYWlxeYGJkZmhqbG5wcnR2eHp8foCChIaIioyOkJKUlpianJ6goqSmqKqsrrCytLa4ury+wMLExsjKzM7Q0tTW2Nrc3uDi5Obo6uzu8PL09vj6/P4bGR8dExEXFQsJDw0DAQcFOzk/PTMxNzUrKS8tIyEnJVtZX11TUVdVS0lPTUNBR0V7eX99c3F3dWtpb21jYWdlm5mfnZORl5WLiY+Ng4GHhbu5v72zsbe1q6mvraOhp6Xb2d/d09HX1cvJz83DwcfF+/n//fPx9/Xr6e/t4+Hn5QADBgUMDwoJGBseHRQXEhEwMzY1PD86OSgrLi0kJyIhYGNmZWxvaml4e359dHdycVBTVlVcX1pZSEtOTURHQkHAw8bFzM/Kydjb3t3U19LR8PP29fz/+vno6+7t5Ofi4aCjpqWsr6qpuLu+vbS3srGQk5aVnJ+amYiLjo2Eh4KBm5idnpeUkZKDgIWGj4yJiquora6npKGis7C1tr+8ubr7+P3+9/Tx8uPg5ebv7Onqy8jNzsfEwcLT0NXW39zZ2ltYXV5XVFFSQ0BFRk9MSUpraG1uZ2RhYnNwdXZ/fHl6Ozg9Pjc0MTIjICUmLywpKgsIDQ4HBAECExAVFh8cGRoADhwSODYkKnB+bGJIRlRa4O788tjWxMqQnoyCqKa0utvVx8nj7f/xq6W3uZOdj4E7NScpAw0fEUtFV1lzfW9hraOxv5WbiYfd08HP5ev5901DUV91e2lnPTMhLwULGRd2eGpkTkBSXAYIGhQ+MCIslpiKhK6gsrzm6Pr03tDCzEFPXVN5d2VrMT8tIwkHFRuhr72zmZeFi9HfzcPp5/X7mpSGiKKsvrDq5Pb40tzOwHp0ZmhCTF5QCgQWGDI8LiDs4vD+1NrIxpySgI6kqri2DAIQHjQ6KCZ8cmBuREpYVjc5KyUPARMdR0lbVX9xY23X2cvF7+Hz/aepu7WfkYONAA0aFzQ5LiNoZXJ/XFFGS9Ddysfk6f7zuLWir4yBlpu7tqGsj4KVmNPeycTn6v3wa2ZxfF9SRUgDDhkUNzotIG1gd3pZVENOBQgfEjE8Kya9sKeqiYSTntXYz8Lh7Pv21tvMweLv+PW+s6SpioeQnQYLHBEyPyglbmN0eVpXQE3a18DN7uP0+bK/qKWGi5yRCgcQHT4zJClib3h1VltMQWFse3ZVWE9CCQQTHj0wJyqxvKumhYifktnUw87t4Pf6t7qtoIOOmZTf0sXI6+bx/GdqfXBTXklEDwIVGDs2ISwMARYbODUiL2RpfnNQXUpH3NHGy+jl8v+0ua6jgI2alwALFh0sJzoxWFNORXR/Ymmwu6atnJeKgejj/vXEz9LZe3BtZldcQUojKDU+DwQZEsvA3dbn7PH6k5iFjr+0qaL2/eDr2tHMx66luLOCiZSfRk1QW2phfHceFQgDMjkkL42Gm5Chqre81d7DyPny7+Q9NisgERoHDGVuc3hJQl9U9/zh6tvQzcavpLmyg4iVnkdMUVprYH12HxQJAjM4JS6Mh5qRoKu2vdTfwsn48+7lPDcqIRAbBg1kb3J5SENeVQEKFxwtJjswWVJPRHV+Y2ixuqesnZaLgOni//TFztPYenFsZ1ZdQEsiKTQ/DgUYE8rB3Nfm7fD7kpmEj761qKMACRIbJC02P0hBWlNsZX53kJmCi7S9pq/Y0crD/PXu5zsyKSAfFg0Ec3phaFdeRUyrormwj4adlOPq8fjHztXcdn9kbVJbQEk+NywlGhMIAebv9P3Cy9DZrqe8tYqDmJFNRF9WaWB7cgUMFx4hKDM63dTPxvnw6+KVnIeOsbijquzl/vfIwdrTpK22v4CJkpt8dW5nWFFKQzQ9Ji8QGQIL197FzPP64eiflo2Eu7KpoEdOVVxjanF4DwYdFCsiOTCak4iBvrespdLbwMn2/+TtCgMYES4nPDVCS1BZZm90faGos7qFjJee6eD78s3E39YxOCMqFRwHDnlwa2JdVE9GY3x3e/Jrb8UwAWcr/terdsqCyX36WUfwrdSir5ykcsC3/ZMmNj/3zDSl5fFx2DEVBMcjwxiWBZoHEoDi6yeydQmDLBobblqgUjvWsynjL4RT0QDtIPyxW2rLvjlKTFjP0O+q+0NNM4VF+QJ/UDyfqFGjQI+SnTj1vLbaIRD/89LNDBPsX5dEF8Snfj1kXRlzYIFP3CIqkIhG7rgU3l4L2+AyOgpJBiRcwtOsYpGV5HnnyDdtjdVOqWxW9Opleq4IunglLhymtMbo3XQfS72LinA+tWZIA/YOYTVXuYbBHZ7h+JgRadmOlJseh+nOVSjfjKGJDb/mQmhBmS0PsFS7FlIJatUwNqU4v0CjnoHz1/t84zmCmy//hzSOQ0TE3unLVHuUMqbCIz3uTJULQvrDTgguoWYo2SSydluiSW2L0SVy+PZkhmiYFtSkXMxdZbaSbHBIUP3tudpeFUZXp42dhJDYqwCMvNMK9+RYBbizRQbQLB6Pyj8PAsGvvQMBE4prOpERQU9n3OqX8s/O8LTmc5asdCLnrTWF4vk36Bx1325H8RpxHSnFiW+3Yg6qGL4b/FY+S8bSeSCa28D+eM1a9B/dqDOIB8cxsRIQWSeA7F9gUX+pGbVKDS3lep+TyZzvoOA7Ta4q9bDI67s8g1OZYRcrBH66d9Ym4WkUY1UhDH2NAQIECBAgQIAbNmzYq02aL168Y8aXNWrUs33678WROXLk071hwp8lSpQzZsyDHTp06MuNAQIECBAgQIAbNmzYq02aL168Y8aXNWrUs33678WROXLk071hwp8lSpQzZsyDHTp06MuNAQIECBAgQIAbNmzYq02aL168Y8aXNWrUs33678WROXLk071hwp8lSpQzZsyDHTp06MuNAQIECBAgQIAbNmzYq02aL168Y8aXNWrUs33678WROXLk071hwp8lSpQzZsyDHTp06MuNAQIECBAgQIAbNmzYq02aL168Y8aXNWrUs33678WROXLk071hwp8lSpQzZsyDHTp06MuN", 256, false);
                     x2 = aesConstants[0];
                     x3 = aesConstants[1];
                     x14 = aesConstants[2];
@@ -4880,7 +4865,7 @@ var msrCrypto = function () {
                     case 256:
                         break;
                     default:
-                        throw new Error('Unsupported keyLength');
+                        throw new Error("Unsupported keyLength");
                 }
 
                 nK = keyLength / 32;
@@ -5253,7 +5238,7 @@ var msrCrypto = function () {
             init: function (ivBytes) {
 
                 if (ivBytes.length !== blockSize) {
-                    throw new Error('Invalid iv size');
+                    throw new Error("Invalid iv size");
                 }
 
                 mIvBytes = ivBytes.slice();
@@ -5317,7 +5302,7 @@ var msrCrypto = function () {
         };
     };
 
-    if (typeof operations !== 'undefined') {
+    if (typeof operations !== "undefined") {
 
         var cbcInstances = {};
 
@@ -5331,11 +5316,11 @@ var msrCrypto = function () {
                 cbcInstances[id].init(p.algorithm.iv);
             }
 
-            if (p.operationSubType === 'process') {
+            if (p.operationSubType === "process") {
                 return cbcInstances[id].processEncrypt(p.buffer);
             }
 
-            if (p.operationSubType === 'finish') {
+            if (p.operationSubType === "finish") {
                 result = cbcInstances[id].finishEncrypt();
                 cbcInstances[id] = null;
                 return result;
@@ -5356,12 +5341,12 @@ var msrCrypto = function () {
                 cbcInstances[id].init(p.algorithm.iv);
             }
 
-            if (p.operationSubType === 'process') {
+            if (p.operationSubType === "process") {
                 cbcInstances[id].processDecrypt(p.buffer);
                 return;
             }
 
-            if (p.operationSubType === 'finish') {
+            if (p.operationSubType === "finish") {
                 result = cbcInstances[id].finishDecrypt();
                 cbcInstances[id] = null;
                 return result;
@@ -5379,33 +5364,33 @@ var msrCrypto = function () {
             }
 
             return {
-                type: 'keyGeneration',
+                type: "keyGeneration",
                 keyData: msrcryptoPseudoRandom.getBytes(Math.floor(p.algorithm.length / 8)),
                 keyHandle: {
                     algorithm: p.algorithm,
                     extractable: p.extractable,
                     usages: null || p.usages,
-                    type: 'secret'
+                    type: "secret"
                 }
             };
         };
 
         msrcryptoCbc.importKey = function (p) {
 
-            var keyObject = {};
+            var keyObject;
             var keyBits = p.keyData.length * 8;
 
-            if (p.format === 'jwk') {
-                keyObject = msrcryptoJwk.jwkToKey(p.keyData, p.algorithm, ['k']);
-            } else if (p.format === 'raw') {
+            if (p.format === "jwk") {
+                keyObject = msrcryptoJwk.jwkToKey(p.keyData, p.algorithm, ["k"]);
+            } else if (p.format === "raw") {
                 if (keyBits !== 128 && keyBits !== 192 && keyBits !== 256) {
-                    throw new Error('invalid key length (should be 128, 192, or 256 bits)');
+                    throw new Error("invalid key length (should be 128, 192, or 256 bits)");
                 }
                 keyObject = {
                     k: msrcryptoUtilities.toArray(p.keyData)
                 };
             } else {
-                throw new Error('unsupported import format');
+                throw new Error("unsupported import format");
             }
 
             p.algorithm.length = keyObject.k.length * 8;
@@ -5416,36 +5401,36 @@ var msrCrypto = function () {
                     algorithm: p.algorithm,
                     extractable: p.extractable || keyObject.extractable,
                     usages: null || p.usages,
-                    type: 'secret'
+                    type: "secret"
                 },
-                type: 'keyImport'
+                type: "keyImport"
             };
         };
 
         msrcryptoCbc.exportKey = function (p) {
 
-            if (p.format === 'jwk') {
+            if (p.format === "jwk") {
                 return {
-                    type: 'keyExport',
+                    type: "keyExport",
                     keyHandle: msrcryptoJwk.keyToJwk(p.keyHandle, p.keyData)
                 };
             }
 
-            if (p.format === 'raw') {
+            if (p.format === "raw") {
                 return {
-                    type: 'keyExport',
+                    type: "keyExport",
                     keyHandle: p.keyData
                 };
             }
 
-            throw new Error('unsupported export format');
+            throw new Error("unsupported export format");
         };
 
-        operations.register('importKey', 'AES-CBC', msrcryptoCbc.importKey);
-        operations.register('exportKey', 'AES-CBC', msrcryptoCbc.exportKey);
-        operations.register('generateKey', 'AES-CBC', msrcryptoCbc.generateKey);
-        operations.register('encrypt', 'AES-CBC', msrcryptoCbc.workerEncrypt);
-        operations.register('decrypt', 'AES-CBC', msrcryptoCbc.workerDecrypt);
+        operations.register("importKey", "AES-CBC", msrcryptoCbc.importKey);
+        operations.register("exportKey", "AES-CBC", msrcryptoCbc.exportKey);
+        operations.register("generateKey", "AES-CBC", msrcryptoCbc.generateKey);
+        operations.register("encrypt", "AES-CBC", msrcryptoCbc.workerEncrypt);
+        operations.register("decrypt", "AES-CBC", msrcryptoCbc.workerDecrypt);
     }
 
     var msrcryptoGcm = function (blockCipher) {
@@ -5598,7 +5583,7 @@ var msrCrypto = function () {
 
             mTagLength = isNaN(tagLength) ? 128 : tagLength;
             if (mTagLength % 8 !== 0) {
-                throw new Error('DataError');
+                throw new Error("DataError");
             }
 
             mIvBytes = ivBytes;
@@ -5754,7 +5739,7 @@ var msrCrypto = function () {
 
     };
 
-    if (typeof operations !== 'undefined') {
+    if (typeof operations !== "undefined") {
 
         var gcmInstances = {};
 
@@ -5768,12 +5753,12 @@ var msrCrypto = function () {
                 gcmInstances[id].init(p.algorithm.iv, p.algorithm.additionalData, p.algorithm.tagLength);
             }
 
-            if (p.operationSubType === 'process') {
+            if (p.operationSubType === "process") {
                 gcmInstances[id].processEncrypt(p.buffer);
                 return;
             }
 
-            if (p.operationSubType === 'finish') {
+            if (p.operationSubType === "finish") {
                 result = gcmInstances[id].finishEncrypt();
                 gcmInstances[id] = null;
                 return result;
@@ -5794,16 +5779,16 @@ var msrCrypto = function () {
                 gcmInstances[id].init(p.algorithm.iv, p.algorithm.additionalData, p.algorithm.tagLength);
             }
 
-            if (p.operationSubType === 'process') {
+            if (p.operationSubType === "process") {
                 gcmInstances[id].processDecrypt(p.buffer);
                 return;
             }
 
-            if (p.operationSubType === 'finish') {
+            if (p.operationSubType === "finish") {
                 result = gcmInstances[id].finishDecrypt();
                 gcmInstances[id] = null;
                 if (result === null) {
-                    throw new Error('OperationError');
+                    throw new Error("OperationError");
                 }
                 return result;
             }
@@ -5816,7 +5801,7 @@ var msrCrypto = function () {
             gcmInstances[id] = null;
 
             if (result === null) {
-                throw new Error('OperationError');
+                throw new Error("OperationError");
             }
 
             return result;
@@ -5829,76 +5814,76 @@ var msrCrypto = function () {
             }
 
             return {
-                type: 'keyGeneration',
+                type: "keyGeneration",
                 keyData: msrcryptoPseudoRandom.getBytes(Math.floor(p.algorithm.length / 8)),
                 keyHandle: {
                     algorithm: p.algorithm,
                     extractable: p.extractable,
                     usages: null || p.usages,
-                    type: 'secret'
+                    type: "secret"
                 }
             };
         };
 
         msrcryptoGcm.importKey = function (p) {
 
-            var keyObject = {};
-            var keyBits = p.keyData.length * 8;
+            var keyObject,
+                keyBits = p.keyData.length * 8;
 
-            if (p.format === 'jwk') {
-                keyObject = msrcryptoJwk.jwkToKey(p.keyData, p.algorithm, ['k']);
-            } else if (p.format === 'raw') {
+            if (p.format === "jwk") {
+                keyObject = msrcryptoJwk.jwkToKey(p.keyData, p.algorithm, ["k"]);
+            } else if (p.format === "raw") {
                 if (keyBits !== 128 && keyBits !== 192 && keyBits !== 256) {
-                    throw new Error('invalid key length (should be 128, 192, or 256 bits)');
+                    throw new Error("invalid key length (should be 128, 192, or 256 bits)");
                 }
                 keyObject = {
                     k: msrcryptoUtilities.toArray(p.keyData)
                 };
             } else {
-                throw new Error('unsupported import format');
+                throw new Error("unsupported import format");
             }
 
             return {
-                type: 'keyImport',
+                type: "keyImport",
                 keyData: keyObject.k,
                 keyHandle: {
                     algorithm: p.algorithm,
                     extractable: p.extractable || keyObject.extractable,
                     usages: null || p.usages,
-                    type: 'secret'
+                    type: "secret"
                 }
             };
         };
 
         msrcryptoGcm.exportKey = function (p) {
 
-            if (p.format === 'jwk') {
+            if (p.format === "jwk") {
                 return {
-                    type: 'keyExport',
+                    type: "keyExport",
                     keyHandle: msrcryptoJwk.keyToJwk(p.keyHandle, p.keyData)
                 };
             }
 
-            if (p.format === 'raw') {
+            if (p.format === "raw") {
                 return {
-                    type: 'keyExport',
+                    type: "keyExport",
                     keyHandle: p.keyData
                 };
             }
 
-            throw new Error('unsupported export format');
+            throw new Error("unsupported export format");
         };
 
-        operations.register('importKey', 'AES-GCM', msrcryptoGcm.importKey);
-        operations.register('exportKey', 'AES-GCM', msrcryptoGcm.exportKey);
-        operations.register('generateKey', 'AES-GCM', msrcryptoGcm.generateKey);
-        operations.register('encrypt', 'AES-GCM', msrcryptoGcm.encrypt);
-        operations.register('decrypt', 'AES-GCM', msrcryptoGcm.decrypt);
+        operations.register("importKey", "AES-GCM", msrcryptoGcm.importKey);
+        operations.register("exportKey", "AES-GCM", msrcryptoGcm.exportKey);
+        operations.register("generateKey", "AES-GCM", msrcryptoGcm.generateKey);
+        operations.register("encrypt", "AES-GCM", msrcryptoGcm.encrypt);
+        operations.register("decrypt", "AES-GCM", msrcryptoGcm.decrypt);
     }
 
     function MsrcryptoPrng() {
         if (!(this instanceof MsrcryptoPrng)) {
-            throw new Error('create MsrcryptoPrng object with new keyword');
+            throw new Error("create MsrcryptoPrng object with new keyword");
         }
 
         var initialized = false;
@@ -5936,7 +5921,7 @@ var msrCrypto = function () {
         function reseed(entropy, additionalEntropy) {
             additionalEntropy = additionalEntropy || [0];
             if (additionalEntropy.length > seedLen) {
-                throw new Error('Incorrect entropy or additionalEntropy length');
+                throw new Error("Incorrect entropy or additionalEntropy length");
             }
             additionalEntropy = additionalEntropy.concat(msrcryptoUtilities.getVector(seedLen - additionalEntropy.length));
 
@@ -5964,10 +5949,10 @@ var msrCrypto = function () {
 
         function generate(requestedBytes, additionalInput) {
             if (requestedBytes >= 65536) {
-                throw new Error('too much random requested');
+                throw new Error("too much random requested");
             }
             if (reseedCounter > reseedInterval) {
-                throw new Error('Reseeding is required');
+                throw new Error("Reseeding is required");
             }
             if (additionalInput && additionalInput.length > 0) {
                 while (additionalInput.length < seedLen) {
@@ -5996,13 +5981,13 @@ var msrCrypto = function () {
             reseed: reseed,
             getBytes: function (length, additionalInput) {
                 if (!initialized) {
-                    throw new Error('can\'t get randomness before initialization');
+                    throw new Error("can't get randomness before initialization");
                 }
                 return generate(length, additionalInput);
             },
             getNonZeroBytes: function (length, additionalInput) {
                 if (!initialized) {
-                    throw new Error('can\'t get randomness before initialization');
+                    throw new Error("can't get randomness before initialization");
                 }
                 var result = [];
                 var buff;
@@ -6018,7 +6003,7 @@ var msrCrypto = function () {
             },
             init: function (entropy, personalization) {
                 if (entropy.length < seedLen) {
-                    throw new Error('Initial entropy length too short');
+                    throw new Error("Initial entropy length too short");
                 }
                 initialize();
                 reseed(entropy, personalization);
@@ -6041,8 +6026,8 @@ var msrCrypto = function () {
 
         function collectEntropy() {
 
-            var headerList = ['Cookie', 'RedirectUri', 'ETag', 'x-ms-client-antiforgery-id', 'x-ms-client-request-id',
-                'x-ms-client-session-id', 'SubscriptionPool'
+            var headerList = ["Cookie", "RedirectUri", "ETag", "x-ms-client-antiforgery-id", "x-ms-client-request-id",
+                "x-ms-client-session-id", "SubscriptionPool"
             ];
 
             var i, pool = [];
@@ -6052,7 +6037,7 @@ var msrCrypto = function () {
             }
 
             var prngCrypto = globalScope.crypto || globalScope.msCrypto;
-            if (prngCrypto && typeof prngCrypto.getRandomValues === 'function') {
+            if (prngCrypto && typeof prngCrypto.getRandomValues === "function") {
                 if (global.Uint8Array) {
                     var res = new global.Uint8Array(poolLength);
                     prngCrypto.getRandomValues(res);
@@ -6061,7 +6046,7 @@ var msrCrypto = function () {
                 }
             }
 
-            if (typeof XMLHttpRequest !== 'undefined') {
+            if (typeof XMLHttpRequest !== "undefined") {
                 var req = new XMLHttpRequest();
                 for (i = 0; i < headerList.length; i += 1) {
                     try {
@@ -6092,19 +6077,19 @@ var msrCrypto = function () {
         }
 
         var canCollect = (global && global.addEventListener) ||
-            (typeof document !== 'undefined' && document.attachEvent);
+            (typeof document !== "undefined" && document.attachEvent);
         var collectors = (function () {
             return {
                 startCollectors: function () {
                     if (!this.collectorsRegistered) {
                         if (global.addEventListener) {
-                            global.addEventListener('mousemove', this.MouseEventCallBack, true);
-                            global.addEventListener('load', this.LoadTimeCallBack, true);
+                            global.addEventListener("mousemove", this.MouseEventCallBack, true);
+                            global.addEventListener("load", this.LoadTimeCallBack, true);
                         } else if (document.attachEvent) {
-                            document.attachEvent('onmousemove', this.MouseEventCallBack);
-                            document.attachEvent('onload', this.LoadTimeCallBack);
+                            document.attachEvent("onmousemove", this.MouseEventCallBack);
+                            document.attachEvent("onload", this.LoadTimeCallBack);
                         } else {
-                            throw new Error('Can\'t attach events for entropy collection');
+                            throw new Error("Can't attach events for entropy collection");
                         }
 
                         this.collectorsRegistered = 1;
@@ -6113,11 +6098,11 @@ var msrCrypto = function () {
                 stopCollectors: function () {
                     if (this.collectorsRegistered) {
                         if (global.removeEventListener) {
-                            global.removeEventListener('mousemove', this.MouseEventCallBack, 1);
-                            global.removeEventListener('load', this.LoadTimeCallBack, 1);
+                            global.removeEventListener("mousemove", this.MouseEventCallBack, 1);
+                            global.removeEventListener("load", this.LoadTimeCallBack, 1);
                         } else if (global.detachEvent) {
-                            global.detachEvent('onmousemove', this.MouseEventCallBack);
-                            global.detachEvent('onload', this.LoadTimeCallBack);
+                            global.detachEvent("onmousemove", this.MouseEventCallBack);
+                            global.detachEvent("onload", this.LoadTimeCallBack);
                         }
 
                         this.collectorsRegistered = 0;
@@ -6128,7 +6113,7 @@ var msrCrypto = function () {
                     var x = eventData.x || eventData.clientX || eventData.offsetX || 0;
                     var y = eventData.y || eventData.clientY || eventData.offsetY || 0;
                     var arr = [d & 0x0ff, (d >> 8) & 0x0ff, (d >> 16) & 0x0ff, (d >> 24) & 0x0ff,
-                        x & 0x0ff, (x >> 8) & 0x0ff, y & 0x0ff, (y >> 8) & 0x0ff
+                    x & 0x0ff, (x >> 8) & 0x0ff, y & 0x0ff, (y >> 8) & 0x0ff
                     ];
 
                     updatePool(arr);
@@ -6159,7 +6144,7 @@ var msrCrypto = function () {
 
             read: function (length) {
                 if (!initialized) {
-                    throw new Error('Entropy pool is not initialized.');
+                    throw new Error("Entropy pool is not initialized.");
                 }
 
                 var ret = entropyPoolPrng.getBytes(length);
@@ -6383,8 +6368,8 @@ var msrCrypto = function () {
     var msrcryptoRsaBase = function (keyStruct) {
 
         var utils = msrcryptoUtilities,
-            keyIsPrivate = keyStruct.hasOwnProperty('n') && keyStruct.hasOwnProperty('d'),
-            keyIsCrt = keyStruct.hasOwnProperty('p') && keyStruct.hasOwnProperty('q'),
+            keyIsPrivate = keyStruct.hasOwnProperty("n") && keyStruct.hasOwnProperty("d"),
+            keyIsCrt = keyStruct.hasOwnProperty("p") && keyStruct.hasOwnProperty("q"),
             modulusLength = keyStruct.n.length;
 
         function toBytes(digits) {
@@ -6472,7 +6457,7 @@ var msrCrypto = function () {
                     return decryptModExp(cipherBytes);
                 }
 
-                throw new Error('missing private key');
+                throw new Error("missing private key");
             }
         };
 
@@ -6505,7 +6490,7 @@ var msrCrypto = function () {
         checkMessageVsMaxHash: function (messageBytes, hashFunction) {
 
             if (messageBytes.length > (hashFunction.maxMessageSize || 0xFFFFFFFF)) {
-                throw new Error('message too long');
+                throw new Error("message too long");
             }
 
             return;
@@ -6522,7 +6507,7 @@ var msrCrypto = function () {
             size = keyStruct.n.length;
 
         if (hashFunction === null) {
-            throw new Error('must supply hashFunction');
+            throw new Error("must supply hashFunction");
         }
 
         function pad(message, label) {
@@ -6532,7 +6517,7 @@ var msrCrypto = function () {
             var encodedMessage;
 
             if (message.length > (size - 2 * (hashFunction.hashLen / 8) - 2)) {
-                throw new Error('Message too long.');
+                throw new Error("Message too long.");
             }
 
             if (label == null) {
@@ -6624,7 +6609,7 @@ var msrCrypto = function () {
             var randomness;
 
             if (data.length > size - 11) {
-                throw new Error('message too long');
+                throw new Error("message too long");
             }
 
             randomness = random.getNonZeroBytes(size - data.length - 3);
@@ -6691,7 +6676,7 @@ var msrCrypto = function () {
             tlen = paddedData.length;
 
             if (size < tlen + 11) {
-                throw new Error('intended encoded message length too short');
+                throw new Error("intended encoded message length too short");
             }
 
             return [0x00, 0x01].concat(
@@ -6730,7 +6715,7 @@ var msrCrypto = function () {
             saltLength = salt ? salt.length : saltLength == null ? mHash.length : saltLength;
 
             if (emLen < mHash.length + saltLength + 2) {
-                throw new Error('encoding error');
+                throw new Error("encoding error");
             }
 
             salt = salt || random.getBytes(saltLength);
@@ -6819,12 +6804,12 @@ var msrCrypto = function () {
         var rsaBase = msrcryptoRsaBase(keyStruct);
 
         if (!mode) {
-            throw new Error('padding mode');
+            throw new Error("padding mode");
         }
 
         function checkHash() {
             if (!hashFunction || !hashFunction.computeHash) {
-                throw new Error('missing hash function');
+                throw new Error("missing hash function");
             }
         }
 
@@ -6835,26 +6820,26 @@ var msrCrypto = function () {
 
         switch (mode) {
 
-            case 'RSAES-PKCS1-V1_5':
+            case "RSAES-PKCS1-V1_5":
                 padding = rsaMode.pkcs1Encrypt(keyStruct);
                 break;
 
-            case 'RSASSA-PKCS1-V1_5':
+            case "RSASSA-PKCS1-V1_5":
                 checkHash();
                 padding = rsaMode.pkcs1Sign(keyStruct, hashFunction);
                 break;
 
-            case 'RSA-OAEP':
+            case "RSA-OAEP":
                 checkHash();
                 padding = rsaMode.oaep(keyStruct, hashFunction);
                 break;
 
-            case 'RSA-PSS':
+            case "RSA-PSS":
                 checkHash();
                 padding = rsaMode.pss(keyStruct, hashFunction);
                 break;
 
-            case 'raw':
+            case "raw":
                 padding = {
                     pad: function (mb) {
                         return mb;
@@ -6866,7 +6851,7 @@ var msrCrypto = function () {
                 break;
 
             default:
-                throw new Error('invalid mode');
+                throw new Error("invalid mode");
         }
 
         if (padding) {
@@ -6896,7 +6881,7 @@ var msrCrypto = function () {
                 if (unPaddingFunction !== null) {
                     decryptedData = unPaddingFunction(decryptedData, labelBytes);
                     if (decryptedData.valid === false) {
-                        throw new Error('OperationError');
+                        throw new Error("OperationError");
                     }
 
                     decryptedData = decryptedData.data;
@@ -6932,7 +6917,7 @@ var msrCrypto = function () {
         return returnObj;
     };
 
-    if (typeof operations !== 'undefined') {
+    if (typeof operations !== "undefined") {
         msrcryptoRsa.sign = function (p) {
             var rsaObj,
                 hashName = p.keyHandle.algorithm.hash.name,
@@ -6961,15 +6946,15 @@ var msrCrypto = function () {
 
             switch (p.algorithm.name) {
 
-                case 'RSAES-PKCS1-V1_5':
+                case "RSAES-PKCS1-V1_5":
                     rsaObj = msrcryptoRsa(p.keyData, p.algorithm.name);
                     result = rsaObj.encrypt(p.buffer);
                     break;
 
-                case 'RSA-OAEP':
+                case "RSA-OAEP":
                     hashName = p.keyHandle.algorithm.hash.name;
                     if (!hashName) {
-                        throw new Error('unsupported hash algorithm');
+                        throw new Error("unsupported hash algorithm");
                     }
                     hashFunc = msrcryptoHashFunctions[hashName.toUpperCase()]();
                     rsaObj = msrcryptoRsa(p.keyData, p.algorithm.name, hashFunc);
@@ -6977,7 +6962,7 @@ var msrCrypto = function () {
                     break;
 
                 default:
-                    throw new Error('unsupported algorithm');
+                    throw new Error("unsupported algorithm");
             }
 
             return result;
@@ -6988,15 +6973,15 @@ var msrCrypto = function () {
 
             switch (p.algorithm.name) {
 
-                case 'RSAES-PKCS1-V1_5':
+                case "RSAES-PKCS1-V1_5":
                     rsaObj = msrcryptoRsa(p.keyData, p.algorithm.name);
                     result = rsaObj.decrypt(p.buffer);
                     break;
 
-                case 'RSA-OAEP':
+                case "RSA-OAEP":
                     var hashName = p.keyHandle.algorithm.hash.name;
                     if (!hashName) {
-                        throw new Error('unsupported hash algorithm');
+                        throw new Error("unsupported hash algorithm");
                     }
                     hashFunc = msrcryptoHashFunctions[hashName.toUpperCase()]();
                     rsaObj = msrcryptoRsa(p.keyData, p.algorithm.name, hashFunc);
@@ -7004,7 +6989,7 @@ var msrCrypto = function () {
                     break;
 
                 default:
-                    throw new Error('unsupported algorithm');
+                    throw new Error("unsupported algorithm");
             }
 
             return result;
@@ -7014,35 +6999,35 @@ var msrCrypto = function () {
 
             var keyObject;
 
-            if (p.format === 'jwk') {
+            if (p.format === "jwk") {
 
-                keyObject = msrcryptoJwk.jwkToKey(p.keyData, p.algorithm, ['n', 'e', 'd', 'q', 'p', 'dq', 'dp', 'qi']);
+                keyObject = msrcryptoJwk.jwkToKey(p.keyData, p.algorithm, ["n", "e", "d", "q", "p", "dq", "dp", "qi"]);
 
                 if (keyObject.d) {
                     keyObject.ctxp = new cryptoMath.MontgomeryMultiplier(cryptoMath.bytesToDigits(keyObject.p)).ctx;
                     keyObject.ctxq = new cryptoMath.MontgomeryMultiplier(cryptoMath.bytesToDigits(keyObject.q)).ctx;
                 }
 
-            } else if (p.format === 'spki') {
+            } else if (p.format === "spki") {
 
                 var publicKeyInfo = asn1.parse(p.keyData);
 
                 if (publicKeyInfo == null) {
-                    throw new Error('invalid key data.');
+                    throw new Error("invalid key data.");
                 }
 
                 var bitString = publicKeyInfo[1];
                 var keySequence = asn1.parse(bitString.data.slice(bitString.header + 1), true);
 
                 if (keySequence == null) {
-                    throw new Error('invalid key data.');
+                    throw new Error("invalid key data.");
                 }
 
                 var n = keySequence[0],
                     e = keySequence[1];
 
-                if (n.type !== 'INTEGER' || e.type !== 'INTEGER') {
-                    throw new Error('invalid key data.');
+                if (n.type !== "INTEGER" || e.type !== "INTEGER") {
+                    throw new Error("invalid key data.");
                 }
 
                 n = n.data.slice(n.header);
@@ -7061,17 +7046,17 @@ var msrCrypto = function () {
                 };
 
             } else {
-                throw new Error('unsupported key import format.');
+                throw new Error("unsupported key import format.");
             }
 
             return {
-                type: 'keyImport',
+                type: "keyImport",
                 keyData: keyObject,
                 keyHandle: {
                     algorithm: p.algorithm,
                     extractable: p.extractable,
                     usages: p.usages,
-                    type: keyObject.d || keyObject.dq ? 'private' : 'public'
+                    type: keyObject.d || keyObject.dq ? "private" : "public"
                 }
             };
         };
@@ -7080,7 +7065,7 @@ var msrCrypto = function () {
             var jsonKeyStringArray = msrcryptoJwk.keyToJwk(p.keyHandle, p.keyData);
 
             return {
-                type: 'keyExport',
+                type: "keyExport",
                 keyHandle: jsonKeyStringArray
             };
         };
@@ -7151,8 +7136,8 @@ var msrCrypto = function () {
         };
 
         msrcryptoRsa.generateKeyPair = function (p) {
-            if (typeof p.algorithm.modulusLength === 'undefined') {
-                throw new Error('missing modulusLength');
+            if (typeof p.algorithm.modulusLength === "undefined") {
+                throw new Error("missing modulusLength");
             }
 
             var keyPair;
@@ -7165,7 +7150,7 @@ var msrCrypto = function () {
                     keyPair = msrcryptoRsa.genRsaKeyFromRandom(p.algorithm.modulusLength, p.algorithm.publicExponent);
                     break;
                 default:
-                    throw new Error('invalid modulusLength');
+                    throw new Error("invalid modulusLength");
             }
 
             var pk = keyPair.privateKey;
@@ -7173,20 +7158,20 @@ var msrCrypto = function () {
             pk.ctxq = (new cryptoMath.MontgomeryMultiplier(b2d(pk.q))).ctx;
 
             var algName = p.algorithm.name;
-            var rsaKeyType = algName.slice(algName.indexOf('-') + 1).toUpperCase();
+            var rsaKeyType = algName.slice(algName.indexOf("-") + 1).toUpperCase();
 
             var publicUsage, privateUsage;
 
-            if (algName === 'RSASSA-PKCS1-V1_5' || algName === 'RSA-PSS') {
-                publicUsage = ['verify'];
-                privateUsage = ['sign'];
+            if (algName === "RSASSA-PKCS1-V1_5" || algName === "RSA-PSS") {
+                publicUsage = ["verify"];
+                privateUsage = ["sign"];
             } else {
-                publicUsage = ['encrypt'];
-                privateUsage = ['decrypt'];
+                publicUsage = ["encrypt"];
+                privateUsage = ["decrypt"];
             }
 
             return {
-                type: 'keyGeneration',
+                type: "keyGeneration",
                 keyPair: {
                     publicKey: {
                         keyData: keyPair.publicKey,
@@ -7194,7 +7179,7 @@ var msrCrypto = function () {
                             algorithm: p.algorithm,
                             extractable: p.extractable,
                             usages: null || publicUsage,
-                            type: 'public'
+                            type: "public"
                         }
                     },
                     privateKey: {
@@ -7203,38 +7188,38 @@ var msrCrypto = function () {
                             algorithm: p.algorithm,
                             extractable: p.extractable,
                             usages: null || privateUsage,
-                            type: 'private'
+                            type: "private"
                         }
                     }
                 }
             };
         };
 
-        operations.register('sign', 'RSASSA-PKCS1-V1_5', msrcryptoRsa.sign);
-        operations.register('sign', 'RSA-PSS', msrcryptoRsa.sign);
+        operations.register("sign", "RSASSA-PKCS1-V1_5", msrcryptoRsa.sign);
+        operations.register("sign", "RSA-PSS", msrcryptoRsa.sign);
 
-        operations.register('verify', 'RSASSA-PKCS1-V1_5', msrcryptoRsa.verify);
-        operations.register('verify', 'RSA-PSS', msrcryptoRsa.verify);
+        operations.register("verify", "RSASSA-PKCS1-V1_5", msrcryptoRsa.verify);
+        operations.register("verify", "RSA-PSS", msrcryptoRsa.verify);
 
-        operations.register('encrypt', 'RSAES-PKCS1-V1_5', msrcryptoRsa.workerEncrypt);
-        operations.register('decrypt', 'RSAES-PKCS1-V1_5', msrcryptoRsa.workerDecrypt);
-        operations.register('encrypt', 'RSA-OAEP', msrcryptoRsa.workerEncrypt);
-        operations.register('decrypt', 'RSA-OAEP', msrcryptoRsa.workerDecrypt);
+        operations.register("encrypt", "RSAES-PKCS1-V1_5", msrcryptoRsa.workerEncrypt);
+        operations.register("decrypt", "RSAES-PKCS1-V1_5", msrcryptoRsa.workerDecrypt);
+        operations.register("encrypt", "RSA-OAEP", msrcryptoRsa.workerEncrypt);
+        operations.register("decrypt", "RSA-OAEP", msrcryptoRsa.workerDecrypt);
 
-        operations.register('importKey', 'RSA-OAEP', msrcryptoRsa.importKey);
-        operations.register('importKey', 'RSAES-PKCS1-V1_5', msrcryptoRsa.importKey);
-        operations.register('importKey', 'RSASSA-PKCS1-V1_5', msrcryptoRsa.importKey);
-        operations.register('importKey', 'RSA-PSS', msrcryptoRsa.importKey);
+        operations.register("importKey", "RSA-OAEP", msrcryptoRsa.importKey);
+        operations.register("importKey", "RSAES-PKCS1-V1_5", msrcryptoRsa.importKey);
+        operations.register("importKey", "RSASSA-PKCS1-V1_5", msrcryptoRsa.importKey);
+        operations.register("importKey", "RSA-PSS", msrcryptoRsa.importKey);
 
-        operations.register('exportKey', 'RSA-OAEP', msrcryptoRsa.exportKey);
-        operations.register('exportKey', 'RSAES-PKCS1-V1_5', msrcryptoRsa.exportKey);
-        operations.register('exportKey', 'RSASSA-PKCS1-V1_5', msrcryptoRsa.exportKey);
-        operations.register('exportKey', 'RSA-PSS', msrcryptoRsa.exportKey);
+        operations.register("exportKey", "RSA-OAEP", msrcryptoRsa.exportKey);
+        operations.register("exportKey", "RSAES-PKCS1-V1_5", msrcryptoRsa.exportKey);
+        operations.register("exportKey", "RSASSA-PKCS1-V1_5", msrcryptoRsa.exportKey);
+        operations.register("exportKey", "RSA-PSS", msrcryptoRsa.exportKey);
 
-        operations.register('generateKey', 'RSA-OAEP', msrcryptoRsa.generateKeyPair);
-        operations.register('generateKey', 'RSAES-PKCS1-V1_5', msrcryptoRsa.generateKeyPair);
-        operations.register('generateKey', 'RSASSA-PKCS1-V1_5', msrcryptoRsa.generateKeyPair);
-        operations.register('generateKey', 'RSA-PSS', msrcryptoRsa.generateKeyPair);
+        operations.register("generateKey", "RSA-OAEP", msrcryptoRsa.generateKeyPair);
+        operations.register("generateKey", "RSAES-PKCS1-V1_5", msrcryptoRsa.generateKeyPair);
+        operations.register("generateKey", "RSASSA-PKCS1-V1_5", msrcryptoRsa.generateKeyPair);
+        operations.register("generateKey", "RSA-PSS", msrcryptoRsa.generateKeyPair);
     }
 
     var msrcryptoKdf = function (hashFunction) {
@@ -7269,7 +7254,7 @@ var msrCrypto = function () {
 
     var msrcryptoKdfInstance = null;
 
-    if (typeof operations !== 'undefined') {
+    if (typeof operations !== "undefined") {
 
         msrcryptoKdf.deriveKey = function (p) {
 
@@ -7296,13 +7281,13 @@ var msrCrypto = function () {
             msrcryptoKdfInstance = null;
 
             return {
-                type: 'keyDerive',
+                type: "keyDerive",
                 keyData: result,
                 keyHandle: {
                     algorithm: p.derivedKeyType,
                     extractable: p.extractable,
                     usages: null || p.usages,
-                    type: 'secret'
+                    type: "secret"
                 }
             };
 
@@ -7334,8 +7319,8 @@ var msrCrypto = function () {
 
         };
 
-        operations.register('deriveKey', 'concat', msrcryptoKdf.deriveKey);
-        operations.register('deriveBits', 'concat', msrcryptoKdf.deriveBits);
+        operations.register("deriveKey", "concat", msrcryptoKdf.deriveKey);
+        operations.register("deriveBits", "concat", msrcryptoKdf.deriveBits);
 
     }
 
@@ -7354,29 +7339,29 @@ var msrCrypto = function () {
                 output = [];
 
             switch (algorithm.hash.name.toUpperCase()) {
-                case 'SHA-1':
+                case "SHA-1":
                     hLen = 20;
                     break;
-                case 'SHA-256':
+                case "SHA-256":
                     hLen = 32;
                     break;
-                case 'SHA-384':
+                case "SHA-384":
                     hLen = 48;
                     break;
-                case 'SHA-512':
+                case "SHA-512":
                     hLen = 64;
                     break;
                 default:
-                    throw new Error('Unsupported hash algorithm');
+                    throw new Error("Unsupported hash algorithm");
             }
 
             blockCount = Math.ceil(byteLen / hLen);
 
             var hmacKey = msrcryptoHmac.importKey({
-                format: 'raw',
+                format: "raw",
                 keyData: keyBytes,
                 algorithm: {
-                    name: 'HMAC',
+                    name: "HMAC",
                     hash: algorithm.hash
                 }
             });
@@ -7424,38 +7409,155 @@ var msrCrypto = function () {
 
     var msrcryptoKdfInstance = null;
 
-    if (typeof operations !== 'undefined') {
+    if (typeof operations !== "undefined") {
 
         msrcryptoPbkdf2.importKey = function (p) {
             var keyData;
 
-            if (p.format === 'raw') {
+            if (p.format === "raw") {
                 keyData = msrcryptoUtilities.toArray(p.keyData);
             } else {
-                throw new Error('unsupported import format');
+                throw new Error("unsupported import format");
             }
 
             if (p.extractable !== false) {
-                throw new Error('only extractable=false is supported.');
+                throw new Error("only extractable=false is supported.");
             }
 
             return {
-                type: 'keyImport',
+                type: "keyImport",
                 keyData: keyData,
                 keyHandle: {
                     algorithm: {
-                        name: 'PBKDF2'
+                        name: "PBKDF2"
                     },
                     extractable: false,
                     usages: p.usages,
-                    type: 'secret'
+                    type: "secret"
                 }
             };
 
         };
 
-        operations.register('deriveBits', 'PBKDF2', msrcryptoPbkdf2.deriveBits);
-        operations.register('importKey', 'PBKDF2', msrcryptoPbkdf2.importKey);
+        operations.register("deriveBits", "PBKDF2", msrcryptoPbkdf2.deriveBits);
+        operations.register("importKey", "PBKDF2", msrcryptoPbkdf2.importKey);
+    }
+
+    var msrcryptoHkdf = (function () {
+
+        function deriveBits(p) {
+
+            var algorithm = p.algorithm,
+                keyBytes = p.keyData,
+                bits = p.length,
+                saltBytes = algorithm.salt,
+                byteLen = Math.ceil(bits / 8),
+                hLen,
+                output = [],
+                infoBytes = algorithm.info,
+                t = [],
+                i,
+                hmacContext;
+
+            switch (algorithm.hash.name.toUpperCase()) {
+                case "SHA-1":
+                    hLen = 20;
+                    break;
+                case "SHA-256":
+                    hLen = 32;
+                    break;
+                case "SHA-384":
+                    hLen = 48;
+                    break;
+                case "SHA-512":
+                    hLen = 64;
+                    break;
+                default:
+                    throw new Error("Unsupported hash algorithm.");
+            }
+
+            if (algorithm.salt == null) {
+                throw new Error("HkdfParams: salt: Missing required property.");
+            }
+
+            if (algorithm.info == null) {
+                throw new Error("HkdfParams: info: Missing required property.");
+            }
+
+            if (bits % 8 !== 0) {
+                throw new Error("The length provided for HKDF is not a multiple of 8 bits.");
+            }
+
+            if (byteLen > 255 * hLen) {
+                throw new Error("The length provided for HKDF is too large.");
+            }
+
+            if (saltBytes.length === 0) {
+                saltBytes = msrcryptoUtilities.getVector(hLen);
+            }
+
+            hmacContext = {
+                workerid: 0,
+                keyHandle: {
+                    algorithm: algorithm
+                },
+                keyData: saltBytes,
+                buffer: keyBytes
+            };
+
+            hmacContext.keyData = msrcryptoHmac.signHmac(hmacContext);
+
+            for (i = 0; i < Math.ceil(byteLen / hLen); i++) {
+                hmacContext.buffer = t.concat(infoBytes).concat([1 + i]);
+                t = msrcryptoHmac.signHmac(hmacContext);
+                output = output.concat(t);
+            }
+
+            return output.slice(0, byteLen);
+        }
+
+        return {
+
+            deriveBits: deriveBits
+
+        };
+
+    }());
+
+    var msrcryptoKdfInstance = null;
+
+    if (typeof operations !== "undefined") {
+
+        msrcryptoHkdf.importKey = function (p) {
+            var keyData;
+
+            if (p.format === "raw") {
+                keyData = msrcryptoUtilities.toArray(p.keyData);
+            } else {
+                throw new Error("unsupported import format");
+            }
+
+            if (p.extractable !== false) {
+                throw new Error("only extractable=false is supported.");
+            }
+
+            return {
+                type: "keyImport",
+                keyData: keyData,
+                keyHandle: {
+                    algorithm: {
+                        name: "HKDF"
+                    },
+                    extractable: false,
+                    usages: p.usages,
+                    type: "secret"
+                }
+            };
+
+        };
+
+        operations.register("deriveBits", "HKDF", msrcryptoHkdf.deriveBits);
+        operations.register("importKey", "HKDF", msrcryptoHkdf.importKey);
     }
 
     var msrcryptoEcdh = function (curve) {
@@ -7509,7 +7611,7 @@ var msrCrypto = function () {
             var secretBytes = cryptoMath.digitsToBytes(sharedSecretPoint.x, true, publicKey.x.length);
 
             if (length && secretBytes.length * 8 < length) {
-                throw new Error('DataError');
+                throw new Error("DataError");
             }
 
             secretBytes = length ? secretBytes.slice(0, Math.ceil(length / 8)) : secretBytes;
@@ -7549,7 +7651,7 @@ var msrCrypto = function () {
 
     var ecdhInstance = null;
 
-    if (typeof operations !== 'undefined') {
+    if (typeof operations !== "undefined") {
 
         msrcryptoEcdh.deriveBits = function (p) {
 
@@ -7568,7 +7670,7 @@ var msrCrypto = function () {
 
         msrcryptoEcdh.deriveKey = function (p) {
 
-            throw new Error('not supported');
+            throw new Error("not supported");
 
             return secretBytes;
         };
@@ -7582,7 +7684,7 @@ var msrCrypto = function () {
             var keyPairData = ecdhInstance.generateKey();
 
             return {
-                type: 'keyPairGeneration',
+                type: "keyPairGeneration",
                 keyPair: {
                     publicKey: {
                         keyData: keyPairData.publicKey,
@@ -7590,7 +7692,7 @@ var msrCrypto = function () {
                             algorithm: p.algorithm,
                             extractable: p.extractable,
                             usages: [],
-                            type: 'public'
+                            type: "public"
                         }
                     },
                     privateKey: {
@@ -7599,7 +7701,7 @@ var msrCrypto = function () {
                             algorithm: p.algorithm,
                             extractable: p.extractable,
                             usages: p.usages,
-                            type: 'private'
+                            type: "private"
                         }
                     }
                 }
@@ -7608,13 +7710,12 @@ var msrCrypto = function () {
 
         msrcryptoEcdh.importKey = function (p) {
 
-            if (p.format === 'raw') {
+            if (p.format === "raw") {
 
-                var keyObject = {};
                 var keyData = p.keyData;
 
                 if (keyData[0] !== 4) {
-                    throw new Error('DataError');
+                    throw new Error("DataError");
                 }
 
                 var elementSize = ~~((keyData.length - 1) / 2);
@@ -7625,11 +7726,11 @@ var msrCrypto = function () {
                     y = keyData.slice(elementSize + 1);
 
                 if (cryptoECC.validatePoint(curveName, x, y) === false) {
-                    throw new Error('DataError');
+                    throw new Error("DataError");
                 }
 
                 return {
-                    type: 'keyImport',
+                    type: "keyImport",
                     keyData: {
                         x: x,
                         y: y
@@ -7638,14 +7739,14 @@ var msrCrypto = function () {
                         algorithm: p.algorithm,
                         extractable: p.extractable || keyObject.extractable,
                         usages: p.usages,
-                        type: 'public'
+                        type: "public"
                     }
                 };
             }
 
-            if (p.format === 'jwk') {
+            if (p.format === "jwk") {
 
-                var keyObject = msrcryptoJwk.jwkToKey(p.keyData, p.algorithm, ['x', 'y', 'd', 'crv']);
+                var keyObject = msrcryptoJwk.jwkToKey(p.keyData, p.algorithm, ["x", "y", "d", "crv"]);
 
                 if (keyObject.d && (!keyObject.x || !keyObject.y)) {
 
@@ -7660,17 +7761,17 @@ var msrCrypto = function () {
                 }
 
                 if (cryptoECC.validatePoint(p.algorithm.namedCurve.toUpperCase(), keyObject.x, keyObject.y) === false) {
-                    throw new Error('DataError');
+                    throw new Error("DataError");
                 }
 
                 return {
-                    type: 'keyImport',
+                    type: "keyImport",
                     keyData: keyObject,
                     keyHandle: {
                         algorithm: p.algorithm,
                         extractable: p.extractable || keyObject.extractable,
                         usages: p.usages,
-                        type: keyObject.d ? 'private' : 'public'
+                        type: keyObject.d ? "private" : "public"
                     }
                 };
             }
@@ -7678,32 +7779,32 @@ var msrCrypto = function () {
 
         msrcryptoEcdh.exportKey = function (p) {
 
-            if (p.format === 'raw' && p.keyHandle.type === 'public') {
+            if (p.format === "raw" && p.keyHandle.type === "public") {
 
                 var keyData = [4].concat(p.keyData.x, p.keyData.y);
 
                 return {
-                    type: 'keyExport',
+                    type: "keyExport",
                     keyHandle: keyData
                 };
             }
 
-            if (p.format === 'jwk') {
+            if (p.format === "jwk") {
                 var jsonKeyStringArray = msrcryptoJwk.keyToJwk(p.keyHandle, p.keyData);
                 return {
-                    type: 'keyExport',
+                    type: "keyExport",
                     keyHandle: jsonKeyStringArray
                 };
             }
 
-            throw new Error('unsupported export format.');
+            throw new Error("unsupported export format.");
         };
 
-        operations.register('importKey', 'ECDH', msrcryptoEcdh.importKey);
-        operations.register('exportKey', 'ECDH', msrcryptoEcdh.exportKey);
-        operations.register('generateKey', 'ECDH', msrcryptoEcdh.generateKey);
-        operations.register('deriveBits', 'ECDH', msrcryptoEcdh.deriveBits);
-        operations.register('deriveKey', 'ECDH', msrcryptoEcdh.deriveKey);
+        operations.register("importKey", "ECDH", msrcryptoEcdh.importKey);
+        operations.register("exportKey", "ECDH", msrcryptoEcdh.exportKey);
+        operations.register("generateKey", "ECDH", msrcryptoEcdh.generateKey);
+        operations.register("deriveBits", "ECDH", msrcryptoEcdh.deriveBits);
+        operations.register("deriveKey", "ECDH", msrcryptoEcdh.deriveKey);
     }
 
     var msrcryptoEcdsa = function (curve) {
@@ -7853,13 +7954,13 @@ var msrCrypto = function () {
 
     };
 
-    if (typeof operations !== 'undefined') {
+    if (typeof operations !== "undefined") {
 
         msrcryptoEcdsa.sign = function (p) {
 
-            msrcryptoUtilities.checkParam(p.algorithm.hash, 'Object', 'algorithm.hash');
-            msrcryptoUtilities.checkParam(p.algorithm.hash.name, 'String', 'algorithm.hash.name');
-            msrcryptoUtilities.checkParam(p.keyHandle.algorithm.namedCurve, 'String', 'p.keyHandle.algorithm.namedCurve');
+            msrcryptoUtilities.checkParam(p.algorithm.hash, "Object", "algorithm.hash");
+            msrcryptoUtilities.checkParam(p.algorithm.hash.name, "String", "algorithm.hash.name");
+            msrcryptoUtilities.checkParam(p.keyHandle.algorithm.namedCurve, "String", "p.keyHandle.algorithm.namedCurve");
 
             var hashName = p.algorithm.hash.name,
                 curve = cryptoECC.createCurve(p.keyHandle.algorithm.namedCurve.toUpperCase()),
@@ -7901,7 +8002,7 @@ var msrCrypto = function () {
             var d = padTo8BytesIncrement(dtb(keyPairData.privateKey));
 
             return {
-                type: 'keyPairGeneration',
+                type: "keyPairGeneration",
                 keyPair: {
                     publicKey: {
                         keyData: {
@@ -7911,8 +8012,8 @@ var msrCrypto = function () {
                         keyHandle: {
                             algorithm: p.algorithm,
                             extractable: p.extractable,
-                            usages: ['verify'],
-                            type: 'public'
+                            usages: ["verify"],
+                            type: "public"
                         }
                     },
                     privateKey: {
@@ -7924,8 +8025,8 @@ var msrCrypto = function () {
                         keyHandle: {
                             algorithm: p.algorithm,
                             extractable: p.extractable,
-                            usages: ['sign'],
-                            type: 'private'
+                            usages: ["sign"],
+                            type: "private"
                         }
                     }
                 }
@@ -7935,13 +8036,12 @@ var msrCrypto = function () {
 
         msrcryptoEcdsa.importKey = function (p) {
 
-            if (p.format === 'raw') {
+            if (p.format === "raw") {
 
-                var keyObject = {};
                 var keyData = p.keyData;
 
                 if (keyData[0] !== 4) {
-                    throw new Error('DataError');
+                    throw new Error("DataError");
                 }
 
                 var elementSize = ~~((keyData.length - 1) / 2);
@@ -7952,11 +8052,11 @@ var msrCrypto = function () {
                     y = keyData.slice(elementSize + 1);
 
                 if (cryptoECC.validatePoint(curveName, x, y) === false) {
-                    throw new Error('DataError');
+                    throw new Error("DataError");
                 }
 
                 return {
-                    type: 'keyImport',
+                    type: "keyImport",
                     keyData: {
                         x: x,
                         y: y
@@ -7965,13 +8065,13 @@ var msrCrypto = function () {
                         algorithm: p.algorithm,
                         extractable: p.extractable || keyObject.extractable,
                         usages: p.usages,
-                        type: 'public'
+                        type: "public"
                     }
                 };
             }
 
-            if (p.format === 'jwk') {
-                var keyObject = msrcryptoJwk.jwkToKey(p.keyData, p.algorithm, ['x', 'y', 'd', 'crv']);
+            if (p.format === "jwk") {
+                var keyObject = msrcryptoJwk.jwkToKey(p.keyData, p.algorithm, ["x", "y", "d", "crv"]);
 
                 if (keyObject.d && (!keyObject.x || !keyObject.y)) {
 
@@ -7986,17 +8086,17 @@ var msrCrypto = function () {
                 }
 
                 if (cryptoECC.validatePoint(p.algorithm.namedCurve.toUpperCase(), keyObject.x, keyObject.y) === false) {
-                    throw new Error('DataError');
+                    throw new Error("DataError");
                 }
 
                 return {
-                    type: 'keyImport',
+                    type: "keyImport",
                     keyData: keyObject,
                     keyHandle: {
                         algorithm: p.algorithm,
                         extractable: p.extractable || keyObject.extractable,
                         usages: null || p.usages,
-                        type: keyObject.d ? 'private' : 'public'
+                        type: keyObject.d ? "private" : "public"
                     }
                 };
             }
@@ -8004,33 +8104,33 @@ var msrCrypto = function () {
 
         msrcryptoEcdsa.exportKey = function (p) {
 
-            if (p.format === 'raw' && p.keyHandle.type === 'public') {
+            if (p.format === "raw" && p.keyHandle.type === "public") {
 
                 var keyData = [4].concat(p.keyData.x, p.keyData.y);
 
                 return {
-                    type: 'keyExport',
+                    type: "keyExport",
                     keyHandle: keyData
                 };
             }
 
-            if (p.format === 'jwk') {
+            if (p.format === "jwk") {
                 var jsonKeyStringArray = msrcryptoJwk.keyToJwk(p.keyHandle, p.keyData);
                 return {
-                    type: 'keyExport',
+                    type: "keyExport",
                     keyHandle: jsonKeyStringArray
                 };
             }
 
-            throw new Error('unsupported export format.');
+            throw new Error("unsupported export format.");
 
         };
 
-        operations.register('sign', 'ECDSA', msrcryptoEcdsa.sign);
-        operations.register('verify', 'ECDSA', msrcryptoEcdsa.verify);
-        operations.register('generateKey', 'ECDSA', msrcryptoEcdsa.generateKey);
-        operations.register('importKey', 'ECDSA', msrcryptoEcdsa.importKey);
-        operations.register('exportKey', 'ECDSA', msrcryptoEcdsa.exportKey);
+        operations.register("sign", "ECDSA", msrcryptoEcdsa.sign);
+        operations.register("verify", "ECDSA", msrcryptoEcdsa.verify);
+        operations.register("generateKey", "ECDSA", msrcryptoEcdsa.generateKey);
+        operations.register("importKey", "ECDSA", msrcryptoEcdsa.importKey);
+        operations.register("exportKey", "ECDSA", msrcryptoEcdsa.exportKey);
     }
 
     var msrcryptoSubtle;
@@ -8052,7 +8152,7 @@ var msrCrypto = function () {
                 } catch (ex) {
                     this.onerror({
                         data: ex,
-                        type: 'error'
+                        type: "error"
                     });
                     return;
                 }
@@ -8102,19 +8202,19 @@ var msrCrypto = function () {
                 });
 
             function opDispatchEvent(e) {
-                if (e.type === 'error') {
+                if (e.type === "error") {
                     if (rejectFunc) {
                         rejectFunc.apply(promise, [e]);
                     }
                     return;
                 }
 
-                if (e.data.type === 'process') {
+                if (e.data.type === "process") {
                     processResults(e.data.result, true);
                     return;
                 }
 
-                if (e.data.type === 'finish') {
+                if (e.data.type === "finish") {
                     processResults(e.data.result, true);
                     return;
                 }
@@ -8143,9 +8243,9 @@ var msrCrypto = function () {
 
                 switch (result.type) {
 
-                    case 'keyGeneration':
-                    case 'keyImport':
-                    case 'keyDerive':
+                    case "keyGeneration":
+                    case "keyImport":
+                    case "keyDerive":
                         if (result.keyPair) {
                             keys.add(result.keyPair.publicKey.keyHandle, result.keyPair.publicKey.keyData);
                             keys.add(result.keyPair.privateKey.keyHandle, result.keyPair.privateKey.keyData);
@@ -8158,10 +8258,10 @@ var msrCrypto = function () {
                             return result.keyHandle;
                         }
 
-                    case 'keyExport':
+                    case "keyExport":
                         return result.keyHandle;
 
-                    case 'keyPairGeneration':
+                    case "keyPairGeneration":
                         privateKey = result.keyPair.privateKey;
                         publicKey = result.keyPair.publicKey;
                         keys.add(publicKey.keyHandle, publicKey.keyData);
@@ -8172,7 +8272,7 @@ var msrCrypto = function () {
                         };
 
                     default:
-                        throw new Error('Unknown key operation');
+                        throw new Error("Unknown key operation");
                 }
             }
 
@@ -8235,21 +8335,21 @@ var msrCrypto = function () {
             };
 
             op.process = function (buffer) {
-                cryptoContext.operationSubType = 'process';
+                cryptoContext.operationSubType = "process";
                 cryptoContext.buffer = utils.toArray(buffer);
                 workerManager.continueJob(this,
                     utils.clone(cryptoContext));
 
-                return promiseQueue.add('process');
+                return promiseQueue.add("process");
             };
 
             op.finish = function () {
-                cryptoContext.operationSubType = 'finish';
+                cryptoContext.operationSubType = "finish";
                 cryptoContext.buffer = [];
                 workerManager.continueJob(this,
                     utils.clone(cryptoContext));
 
-                return promiseQueue.add('finish');
+                return promiseQueue.add("finish");
             };
 
             op.abort = function () {
@@ -8304,7 +8404,7 @@ var msrCrypto = function () {
 
             var callbackQueue = [];
 
-            var setFunction = typeof setImmediate === 'undefined' ? setTimeout : setImmediate;
+            var setFunction = typeof setImmediate === "undefined" ? setTimeout : setImmediate;
 
             function executeNextCallback() {
                 callbackQueue.shift()();
@@ -8315,7 +8415,7 @@ var msrCrypto = function () {
                 setFunction(executeNextCallback, 0);
             }
 
-            var workerStatus = webWorkerSupport ? 'available' : 'unavailable';
+            var workerStatus = webWorkerSupport ? "available" : "unavailable";
 
             function getFreeWorker() {
 
@@ -8392,7 +8492,7 @@ var msrCrypto = function () {
 
                         continueJob(job.operation, job.data);
 
-                        if (job.data.operationSubType === 'process') {
+                        if (job.data.operationSubType === "process") {
                             for (i = 0; i < jobQueue.length; i++) {
                                 if (job.operation === jobQueue[i].operation) {
                                     continueJob(jobQueue[i].operation, jobQueue[i].data);
@@ -8415,11 +8515,11 @@ var msrCrypto = function () {
 
                 var worker;
 
-                if (workerStatus === 'pending') {
-                    throw new Error('Creating new worker while workerstatus=pending');
+                if (workerStatus === "pending") {
+                    throw new Error("Creating new worker while workerstatus=pending");
                 }
 
-                if (workerStatus === 'ready') {
+                if (workerStatus === "ready") {
                     try {
                         worker = new Worker(scriptUrl);
                         worker.postMessage({
@@ -8428,7 +8528,7 @@ var msrCrypto = function () {
                         worker.isWebWorker = true;
                     } catch (ex) {
                         asyncMode = false;
-                        workerStatus = 'failed';
+                        workerStatus = "failed";
                         worker.terminate();
                         worker = syncWorker();
                         worker.isWebWorker = false;
@@ -8466,7 +8566,7 @@ var msrCrypto = function () {
                         }
                     }
 
-                    if (!(e.data.hasOwnProperty('type') && e.data.type === 'process')) {
+                    if (!(e.data.hasOwnProperty("type") && e.data.type === "process")) {
                         jobCompleted(worker);
                     }
 
@@ -8488,43 +8588,43 @@ var msrCrypto = function () {
             }
 
             function useWebWorkers(enable) {
-                if (workerStatus === 'unavailable') {
-                    utils.consoleLog('web workers not available in this browser.');
+                if (workerStatus === "unavailable") {
+                    utils.consoleLog("web workers not available in this browser.");
                     return;
                 }
 
-                if (enable === true && workerStatus === 'ready') {
+                if (enable === true && workerStatus === "ready") {
                     return;
                 }
 
-                if (enable === false && workerStatus === 'available') {
+                if (enable === false && workerStatus === "available") {
                     return;
                 }
 
-                if (enable === false && workerStatus === 'ready') {
+                if (enable === false && workerStatus === "ready") {
                     asyncMode = false;
-                    workerStatus = 'available';
-                    utils.consoleLog('web workers disabled.');
+                    workerStatus = "available";
+                    utils.consoleLog("web workers disabled.");
                     return;
                 }
 
-                if (workerStatus === 'pending') {
+                if (workerStatus === "pending") {
                     return;
                 }
 
-                workerStatus = 'pending';
+                workerStatus = "pending";
 
                 var worker = new Worker(scriptUrl);
 
                 function setWorkerStatus(e) {
                     var succeeded = !!(e.data && e.data.initialized === true);
-                    worker.removeEventListener('message', setWorkerStatus, false);
-                    worker.removeEventListener('error', setWorkerStatus, false);
+                    worker.removeEventListener("message", setWorkerStatus, false);
+                    worker.removeEventListener("error", setWorkerStatus, false);
                     worker.terminate();
-                    workerStatus = succeeded ? 'ready' : 'failed';
+                    workerStatus = succeeded ? "ready" : "failed";
                     asyncMode = succeeded;
-                    utils.consoleLog('web worker initialization ' + (succeeded ? 'succeeded. Now using web workers.' :
-                        'failed. running synchronously.' + (e.message || '')));
+                    utils.consoleLog("web worker initialization " + (succeeded ? "succeeded. Now using web workers." :
+                        "failed. running synchronously." + (e.message || "")));
                     if (jobQueue.length > 0) {
                         var job = jobQueue.shift();
                         runJob(job.operation, job.data);
@@ -8532,8 +8632,8 @@ var msrCrypto = function () {
                     return;
                 }
 
-                worker.addEventListener('message', setWorkerStatus, false);
-                worker.addEventListener('error', setWorkerStatus, false);
+                worker.addEventListener("message", setWorkerStatus, false);
+                worker.addEventListener("error", setWorkerStatus, false);
 
                 worker.postMessage({
                     prngSeed: msrcryptoPseudoRandom.getBytes(48)
@@ -8553,7 +8653,7 @@ var msrCrypto = function () {
 
                 var worker = null;
 
-                if (workerStatus === 'pending') {
+                if (workerStatus === "pending") {
                     queueJob(operation, data);
                     return;
                 }
@@ -8571,7 +8671,7 @@ var msrCrypto = function () {
 
                 if (worker === null) {
                     queueJob(operation, data);
-                    throw new Error('could not create new worker');
+                    throw new Error("could not create new worker");
                 }
 
                 worker.operation = operation;
@@ -8627,73 +8727,73 @@ var msrCrypto = function () {
 
         function checkOperation(operationType, algorithmName) {
             if (!operations.exists(operationType, algorithmName)) {
-                throw new Error('unsupported algorithm');
+                throw new Error("unsupported algorithm");
             }
         }
 
         var subtleParameters = [{
-            name: 'algorithm',
-            type: 'Object',
+            name: "algorithm",
+            type: "Object",
             required: true
         },
         {
-            name: 'keyHandle',
-            type: 'Object',
+            name: "keyHandle",
+            type: "Object",
             required: true
         },
         {
-            name: 'buffer',
-            type: 'Array',
+            name: "buffer",
+            type: "Array",
             required: false
         },
         {
-            name: 'signature',
-            type: 'Array',
+            name: "signature",
+            type: "Array",
             required: true
         },
         {
-            name: 'format',
-            type: 'String',
+            name: "format",
+            type: "String",
             required: true
         },
         {
-            name: 'keyData',
-            type: 'Object',
+            name: "keyData",
+            type: "Object",
             required: true
         },
         {
-            name: 'extractable',
-            type: 'Boolean',
+            name: "extractable",
+            type: "Boolean",
             required: false
         },
         {
-            name: 'usages',
-            type: 'Array',
+            name: "usages",
+            type: "Array",
             required: false
         },
         {
-            name: 'derivedKeyType',
-            type: 'Object',
+            name: "derivedKeyType",
+            type: "Object",
             required: true
         },
         {
-            name: 'length',
-            type: 'Number',
+            name: "length",
+            type: "Number",
             required: false
         },
         {
-            name: 'extractable',
-            type: 'Boolean',
+            name: "extractable",
+            type: "Boolean",
             required: true
         },
         {
-            name: 'usages',
-            type: 'Array',
+            name: "usages",
+            type: "Array",
             required: true
         },
         {
-            name: 'keyData',
-            type: 'Array',
+            name: "keyData",
+            type: "Array",
             required: true
         }
         ];
@@ -8718,7 +8818,7 @@ var msrCrypto = function () {
             var data = keys.lookup(handle);
 
             if (!data) {
-                throw new Error('key not found');
+                throw new Error("key not found");
             }
 
             return data;
@@ -8728,18 +8828,18 @@ var msrCrypto = function () {
 
             var parameterCollection = {
                 operationType: operationName
-            };
-            var operationParameterSet;
-            var expectedParam;
-            var actualParam;
-            var i;
+            },
+                operationParameterSet,
+                expectedParam,
+                actualParam,
+                i;
 
-            if (operationName === 'importKey' && (parameterSet[0] === 'raw' || parameterSet[0] === 'spki')) {
-                operationName = 'importKeyRaw';
+            if (operationName === "importKey" && (parameterSet[0] === "raw" || parameterSet[0] === "spki")) {
+                operationName = "importKeyRaw";
             }
 
-            if (operationName === 'importKey' && parameterSet[0] === 'jwk') {
-                operationName = 'importKeyJwk';
+            if (operationName === "importKey" && parameterSet[0] === "jwk") {
+                operationName = "importKeyJwk";
             }
 
             operationParameterSet = subtleParametersSets[operationName];
@@ -8761,7 +8861,7 @@ var msrCrypto = function () {
                     actualParam = utils.toArray(actualParam);
                 }
 
-                if (utils.getObjectType(actualParam) === 'ArrayBuffer') {
+                if (utils.getObjectType(actualParam) === "ArrayBuffer") {
                     actualParam = utils.toArray(actualParam);
                 }
 
@@ -8769,7 +8869,7 @@ var msrCrypto = function () {
                     throw new Error(expectedParam.name);
                 }
 
-                if (expectedParam.name === 'algorithm') {
+                if (expectedParam.name === "algorithm") {
 
                     actualParam.name = actualParam.name.toUpperCase();
 
@@ -8789,7 +8889,7 @@ var msrCrypto = function () {
                         actualParam.additionalData = utils.toArray(actualParam.additionalData);
                     }
 
-                    if (actualParam.hash && !actualParam.hash.name && utils.getObjectType(actualParam.hash) === 'String') {
+                    if (actualParam.hash && !actualParam.hash.name && utils.getObjectType(actualParam.hash) === "String") {
                         actualParam.hash = {
                             name: actualParam.hash
                         };
@@ -8797,7 +8897,7 @@ var msrCrypto = function () {
                 }
 
                 if (parameterCollection.hasOwnProperty(expectedParam.name)) {
-                    parameterCollection[expectedParam.name + '1'] = actualParam;
+                    parameterCollection[expectedParam.name + "1"] = actualParam;
                 } else {
                     parameterCollection[expectedParam.name] = actualParam;
                 }
@@ -8826,7 +8926,7 @@ var msrCrypto = function () {
 
             var op = keyFunc ? keyOperation(pc) : cryptoOperation(pc);
 
-            if (keyFunc || pc.buffer || operationName === 'deriveBits' || operationName === 'wrapKey') {
+            if (keyFunc || pc.buffer || operationName === "deriveBits" || operationName === "wrapKey") {
                 workerManager.runJob(op, pc);
             }
 
@@ -8839,27 +8939,27 @@ var msrCrypto = function () {
         var publicMethods = {
 
             encrypt: function (algorithm, keyHandle, buffer) {
-                return executeOperation('encrypt', arguments, 0);
+                return executeOperation("encrypt", arguments, 0);
             },
 
             decrypt: function (algorithm, keyHandle, buffer) {
-                return executeOperation('decrypt', arguments, 0);
+                return executeOperation("decrypt", arguments, 0);
             },
 
             sign: function (algorithm, keyHandle, buffer) {
-                return executeOperation('sign', arguments, 0);
+                return executeOperation("sign", arguments, 0);
             },
 
             verify: function (algorithm, keyHandle, signature, buffer) {
-                return executeOperation('verify', arguments, 0);
+                return executeOperation("verify", arguments, 0);
             },
 
             digest: function (algorithm, buffer) {
-                return executeOperation('digest', arguments, 0);
+                return executeOperation("digest", arguments, 0);
             },
 
             generateKey: function (algorithm, extractable, keyUsage) {
-                return executeOperation('generateKey', arguments, 1);
+                return executeOperation("generateKey", arguments, 1);
             },
 
             deriveKey: function (algorithm, baseKey, derivedKeyType, extractable, keyUsage) {
@@ -8871,31 +8971,31 @@ var msrCrypto = function () {
                     var keyLength;
 
                     switch (derivedKeyType.name.toUpperCase()) {
-                        case 'AES-CBC':
-                        case 'AES-GCM':
+                        case "AES-CBC":
+                        case "AES-GCM":
                             keyLength = derivedKeyType.length;
                             break;
-                        case 'HMAC':
+                        case "HMAC":
                             keyLength = derivedKeyType.length || {
-                                'SHA-1': 512,
-                                'SHA-224': 512,
-                                'SHA-256': 512,
-                                'SHA-384': 1024,
-                                'SHA-512': 1024
+                                "SHA-1": 512,
+                                "SHA-224": 512,
+                                "SHA-256": 512,
+                                "SHA-384": 1024,
+                                "SHA-512": 1024
                             }[derivedKeyType.hash.name.toUpperCase()];
                             break;
                         default:
-                            reject(new Error('No Supported'));
+                            reject(new Error("No Supported"));
                             return;
                     }
 
                     deriveBits(algorithm, baseKey, keyLength)
                         .then(function (bits) {
-                            return importKey('raw', bits, derivedKeyType, extractable, keyUsage);
+                            return importKey("raw", bits, derivedKeyType, extractable, keyUsage);
                         })
                         .then(function (key) {
                             resolve(key);
-                        })['catch'](function (err) {
+                        })["catch"](function (err) {
                             reject(err);
                         });
 
@@ -8904,15 +9004,15 @@ var msrCrypto = function () {
             },
 
             deriveBits: function (algorithm, baseKey, length) {
-                return executeOperation('deriveBits', arguments, 0);
+                return executeOperation("deriveBits", arguments, 0);
             },
 
             importKey: function (format, keyData, algorithm, extractable, keyUsage) {
-                return executeOperation('importKey', arguments, 1);
+                return executeOperation("importKey", arguments, 1);
             },
 
             exportKey: function (format, keyHandle) {
-                return executeOperation('exportKey', [keyHandle.algorithm, format, keyHandle], 1);
+                return executeOperation("exportKey", [keyHandle.algorithm, format, keyHandle], 1);
             },
 
             wrapKey: function (format, key, wrappingKey, wrappingKeyAlgorithm) {
@@ -8922,16 +9022,16 @@ var msrCrypto = function () {
                 return new Promise(function (resolve, reject) {
 
                     if (key.extractable === false ||
-                        key.usages.indexOf('wrapKey') < 0 ||
+                        key.usages.indexOf("wrapKey") < 0 ||
                         wrappingKey.algorithm.name.toUpperCase() !== wrappingKeyAlgorithm.name) {
-                        reject(new Error('InvalidAccessError'));
+                        reject(new Error("InvalidAccessError"));
                         return;
                     }
 
                     exportKey(format, key)
 
                         .then(function (keyData) {
-                            return encrypt(wrappingKeyAlgorithm, wrappingKey, format === 'jwk' ?
+                            return encrypt(wrappingKeyAlgorithm, wrappingKey, format === "jwk" ?
                                 utils.stringToBytes(JSON.stringify(keyData, null, 0)) : keyData);
                         })
 
@@ -8939,9 +9039,9 @@ var msrCrypto = function () {
                             resolve(cipherArrayBuffer);
                         })
 
-                        ['catch'](function (err) {
-                            reject(err);
-                        });
+                    ["catch"](function (err) {
+                        reject(err);
+                    });
                 });
             },
 
@@ -8951,16 +9051,16 @@ var msrCrypto = function () {
 
                 return new Promise(function (resolve, reject) {
 
-                    if (unwrappingKey.usages.indexOf('unwrapKey') < 0 ||
+                    if (unwrappingKey.usages.indexOf("unwrapKey") < 0 ||
                         unwrappingKey.algorithm.name.toUpperCase() !== unwrapAlgorithm.name) {
-                        reject(new Error('InvalidAccessError'));
+                        reject(new Error("InvalidAccessError"));
                         return;
                     }
 
                     decrypt(unwrapAlgorithm, unwrappingKey, wrappedKey)
 
                         .then(function (keyPlain) {
-                            return importKey(format, format === 'jwk' ? JSON.parse(utils.bytesToString(keyPlain)) : keyPlain,
+                            return importKey(format, format === "jwk" ? JSON.parse(utils.bytesToString(keyPlain)) : keyPlain,
                                 unwrappedKeyAlgorithm, extractable, keyUsages);
                         })
 
@@ -8968,9 +9068,9 @@ var msrCrypto = function () {
                             resolve(key);
                         })
 
-                        ['catch'](function (err) {
-                            reject(err);
-                        });
+                    ["catch"](function (err) {
+                        reject(err);
+                    });
                 });
 
             }
@@ -8997,15 +9097,15 @@ var msrCrypto = function () {
             var rsaObj = msrcryptoRsa(
                 params.keyData1,
                 params.keyHandle1.algorithm.name,
-                msrcryptoHashFunctions['SHA-1'])();
+                msrcryptoHashFunctions["SHA-1"])();
 
             var tagLength = 128;
 
             var keyToWrapJwk = msrcryptoJwk.keyToJwkOld(params.keyHandle, params.keyData);
 
             var jweHeader = {
-                alg: params.keyHandle1.algorithm.name.toUpperCase(),
-                enc: 'A128GCM'
+                "alg": params.keyHandle1.algorithm.name.toUpperCase(),
+                "enc": "A128GCM"
             };
 
             var encodedJweHeader =
@@ -9021,7 +9121,7 @@ var msrCrypto = function () {
 
             var encodedJweIv = utils.toBase64(jweIv, true);
 
-            var additionalData = encodedJweHeader.concat('.', encodedJweEncryptedKey, '.', encodedJweIv);
+            var additionalData = encodedJweHeader.concat(".", encodedJweEncryptedKey, ".", encodedJweIv);
 
             var gcm = msrcryptoGcm(msrcryptoBlockCipher.aes(cmk));
             gcm.init(jweIv, utils.stringToBytes(additionalData), tagLength);
@@ -9072,12 +9172,12 @@ var msrCrypto = function () {
             var ciphertext =
                 b64Tobytes(keyDataJwk.ciphertext);
 
-            var hashFunc = msrcryptoHashFunctions['SHA-1']();
+            var hashFunc = msrcryptoHashFunctions["SHA-1"]();
             var rsaObj = msrcryptoRsa(params.keyData, params.keyHandle.algorithm.name, hashFunc);
             var inKey = rsaObj.decrypt(encrypted_key);
 
             var additionalData =
-                keyDataJwk.recipients[0].header.concat('.', keyDataJwk.recipients[0].encrypted_key, '.',
+                keyDataJwk.recipients[0].header.concat(".", keyDataJwk.recipients[0].encrypted_key, ".",
                     keyDataJwk.initialization_vector);
 
             var gcm = msrcryptoGcm(msrcryptoBlockCipher.aes(inKey));
@@ -9085,10 +9185,10 @@ var msrCrypto = function () {
 
             var result = gcm.decrypt(ciphertext, integrity_value);
 
-            var keyObject = msrcryptoJwk.jwkToKey(result, params.algorithm, ['k']);
+            var keyObject = msrcryptoJwk.jwkToKey(result, params.algorithm, ["k"]);
 
             return {
-                type: 'keyImport',
+                type: "keyImport",
                 keyData: keyObject.k,
                 keyHandle: {
                     algorithm: {
@@ -9096,7 +9196,7 @@ var msrCrypto = function () {
                     },
                     extractable: params.extractable || keyObject.extractable,
                     usages: params.usages,
-                    type: 'secret'
+                    type: "secret"
                 }
             };
         }
@@ -9107,9 +9207,9 @@ var msrCrypto = function () {
         };
 
     })();
-    if (typeof operations !== 'undefined') {
-        operations.register('wrapKey', 'AES-GCM', msrcryptoWrapKey.wrapKey);
-        operations.register('unwrapKey', 'AES-CBC', msrcryptoWrapKey.unwrapKey);
+    if (typeof operations !== "undefined") {
+        operations.register("wrapKey", "AES-GCM", msrcryptoWrapKey.wrapKey);
+        operations.register("unwrapKey", "AES-CBC", msrcryptoWrapKey.unwrapKey);
     }
 
     var publicMethods = {
@@ -9128,8 +9228,8 @@ var msrCrypto = function () {
         initPrng: function (entropyData) {
             var entropyDataType = Object.prototype.toString.call(entropyData);
 
-            if (entropyDataType !== '[object Array]' && entropyDataType !== '[object Uint8Array]') {
-                throw new Error('entropyData must be a Array or Uint8Array');
+            if (entropyDataType !== "[object Array]" && entropyDataType !== "[object Uint8Array]") {
+                throw new Error("entropyData must be a Array or Uint8Array");
             }
 
             entropyPool && entropyPool.reseed(entropyData);
@@ -9176,10 +9276,6 @@ var msrCrypto = function () {
     msrcryptoPseudoRandom.init(localEntropy);
     return publicMethods;
 
-};
+}
 
 export default msrCrypto();
-
-//     return msrCrypto();
-
-// }));

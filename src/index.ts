@@ -17,7 +17,10 @@ export {
     Key
 } from './secretarium.key';
 
-
 export {
     SCP
 } from './secretarium.connector';
+
+export {
+    default as crypto
+} from './secretarium.crypto';

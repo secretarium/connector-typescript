@@ -1,5 +1,6 @@
+import { atob, btoa } from 'js-base64';
 import { ErrorMessage, ErrorCodes } from './secretarium.constant';
-import crypto from './msrcrypto';
+import crypto from './secretarium.crypto';
 
 export function xor(a: Uint8Array, b: Uint8Array): Uint8Array {
     if (a.length !== b.length)
@@ -43,7 +44,13 @@ export function toBase64(src: Uint8Array, urlSafeMode = false): string {
 
 export function fromBase64(enc: string, urlSafeMode = false): Uint8Array {
     const x = urlSafeMode ? enc.replace(/-/g, '+').replace(/_/g, '/') : enc;
-    return Uint8Array.from(crypto.fromBase64(x));
+    const str = atob(x);
+    const len = str.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = str.charCodeAt(i);
+    }
+    return bytes;
 }
 
 const byteToHex = (new Array(256)).map(n => n.toString(16).padStart(2, '0'));
@@ -154,7 +161,7 @@ export function getRandomString(size = 32): string {
 }
 
 export async function hash(data: Uint8Array): Promise<Uint8Array> {
-    return new Uint8Array(await crypto.subtle?.digest({ name: 'SHA-256' }, data));
+    return new Uint8Array(await crypto.subtle.digest({ name: 'SHA-256' }, data));
 }
 
 export async function hashBase64(s: string, urlSafeMode = false): Promise<string> {
