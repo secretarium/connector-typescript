@@ -19,6 +19,7 @@
 
 var msrCryptoVersion = "1.6.2";
 var global = {};
+var self = undefined;
 
 var msrCrypto = function () {
 
