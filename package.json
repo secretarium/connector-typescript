@@ -1,6 +1,6 @@
 {
     "name": "@secretarium/connector",
-    "version": "0.9.3",
+    "version": "0.10.0",
     "description": "Connector for API communication with Secretarium enclave clusters",
     "main": "lib/secretarium.umd.js",
     "types": "lib/src/index.d.ts",
