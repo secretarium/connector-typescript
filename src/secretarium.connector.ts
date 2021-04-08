@@ -51,11 +51,11 @@ type TransactionNotificationHandlers = QueryNotificationHandlers & {
 }
 
 export type Query = QueryHandlers & {
-    send?: () => Promise<Record<string, unknown> | string | void>;
+    send: () => Promise<Record<string, unknown> | string | void>;
 }
 
 export type Transaction = TransactionHandlers & {
-    send?: () => Promise<Record<string, unknown> | string | void>;
+    send: () => Promise<Record<string, unknown> | string | void>;
 }
 
 export class SCP {

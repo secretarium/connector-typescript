@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { atob, btoa } from 'js-base64';
 import { ErrorMessage, ErrorCodes } from './secretarium.constant';
 import crypto from './secretarium.crypto';
@@ -5,7 +6,7 @@ import crypto from './secretarium.crypto';
 export function xor(a: Uint8Array, b: Uint8Array): Uint8Array {
     if (a.length !== b.length)
         throw new Error(ErrorMessage[ErrorCodes.EXORNOTSS]);
-    return a.map((x, i) => x ^ b[i]);
+    return a.map((x, i) => x ^ b[i]!);
 }
 
 export function incrementBy(src: Uint8Array, offset: Uint8Array): Uint8Array {
@@ -13,12 +14,12 @@ export function incrementBy(src: Uint8Array, offset: Uint8Array): Uint8Array {
 
     for (let j = offset.length - 1; j >= 0; j--) {
         for (let i = j + szDiff, o = offset[j]; i >= 0; i--) {
-            if (inc[i] + o > 255) {
-                inc[i] = inc[i] + o - 256;
+            if (inc[i]! + o! > 255) {
+                inc[i] = inc[i]! + o! - 256;
                 o = 1;
             }
             else {
-                inc[i] = inc[i] + o;
+                inc[i] = inc[i]! + o!;
                 break;
             }
         }
@@ -74,12 +75,12 @@ export function concatBytes(a: Uint8Array, b: Uint8Array): Uint8Array {
 export function concatBytesArrays(arrays: Array<Uint8Array>): Uint8Array {
     let length = 0;
     for (let i = 0; i < arrays.length; i++) {
-        length += arrays[i].length;
+        length += arrays[i]!.length;
     }
     const c = new Uint8Array(length);
     for (let i = 0, j = 0; i < arrays.length; i++) {
-        c.set(arrays[i], j);
-        j += arrays[i].length;
+        c.set(arrays[i]!, j);
+        j += arrays[i]!.length;
     }
     return c;
 }
@@ -88,7 +89,7 @@ export function decode(octets: Uint8Array): string {
     let string = '';
     let i = 0;
     while (i < octets.length) {
-        let octet = octets[i];
+        let octet = octets[i]!;
         let bytesNeeded = 0;
         let codePoint = 0;
         if (octet <= 0x7F) {
@@ -107,7 +108,7 @@ export function decode(octets: Uint8Array): string {
         if (octets.length - i - bytesNeeded > 0) {
             let k = 0;
             while (k < bytesNeeded) {
-                octet = octets[i + k + 1];
+                octet = octets[i + k + 1]!;
                 codePoint = (codePoint << 6) | (octet & 0x3F);
                 k += 1;
             }
