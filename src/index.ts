@@ -7,6 +7,8 @@ export type Query = TC.Query;
 export type Transaction = TC.Transaction;
 export type ClearKeyPair = TK.ClearKeyPair;
 export type EncryptedKeyPair = TK.EncryptedKeyPair;
+export type EncryptedKeyPairV0 = TK.EncryptedKeyPairV0;
+export type EncryptedKeyPairV2 = TK.EncryptedKeyPairV2;
 
 export {
     Utils,

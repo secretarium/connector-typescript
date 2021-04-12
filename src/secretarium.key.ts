@@ -10,7 +10,7 @@ export type ClearKeyPair = {
     version: number;
 }
 
-type EncryptedKeyPairV0 = {
+export type EncryptedKeyPairV0 = {
     version: string;
     name?: string;
     iv: string;
@@ -19,7 +19,7 @@ type EncryptedKeyPairV0 = {
     encryptedKeyPair?: string;
 }
 
-type EncryptedKeyPairV2 = {
+export type EncryptedKeyPairV2 = {
     version: number;
     name?: string;
     iv: string;
