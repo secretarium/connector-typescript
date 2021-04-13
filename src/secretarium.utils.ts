@@ -43,8 +43,8 @@ export function toBase64(src: Uint8Array, urlSafeMode = false): string {
     return urlSafeMode ? x.replace(/\+/g, '-').replace(/\//g, '_') : x;
 }
 
-export function fromBase64(enc: string, urlSafeMode = false): Uint8Array {
-    const x = urlSafeMode ? enc.replace(/-/g, '+').replace(/_/g, '/') : enc;
+export function fromBase64(enc: string): Uint8Array {
+    const x = enc.replace(/-/g, '+').replace(/_/g, '/');
     const str = atob(x);
     const len = str.length;
     const bytes = new Uint8Array(len);

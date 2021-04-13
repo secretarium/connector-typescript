@@ -175,7 +175,7 @@ export class SCP {
             this._socket.close();
 
         this._updateState(ConnectionState.connecting);
-        const trustedKey = typeof knownTrustedKey === 'string' ? Uint8Array.from(Utils.fromBase64(knownTrustedKey, true)) : knownTrustedKey;
+        const trustedKey = typeof knownTrustedKey === 'string' ? Uint8Array.from(Utils.fromBase64(knownTrustedKey)) : knownTrustedKey;
         const socket = this._socket = new NNG.WS();
         let ecdh: CryptoKeyPair;
         let ecdhPubKeyRaw: Uint8Array;
