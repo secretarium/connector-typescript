@@ -1,7 +1,6 @@
 
 var defaultPlugins = [
     '@typescript-eslint/eslint-plugin',
-    'flowtype',
     'import',
     'jest'
 ];

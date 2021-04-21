@@ -48,7 +48,7 @@ describe('Connector key', () => {
         return Key.importEncryptedKeyPair(envV1Key, 'HelloWorld').then(() => {
             return;
         }).catch((err) => {
-            expect(err).toEqual(new Error('Can\'t decrypt, Invalid password'));
+            expect(err).toEqual(new Error('Cannot decrypt, Invalid password'));
         });
     });
 
@@ -63,7 +63,7 @@ describe('Connector key', () => {
         return Key.importEncryptedKeyPair(encV2Key, '1234').then(() => {
             return;
         }).catch((err) => {
-            expect(err).toEqual(new Error('Can\'t decrypt, Invalid password'));
+            expect(err).toEqual(new Error('Cannot decrypt, Invalid password'));
         });
     });
 

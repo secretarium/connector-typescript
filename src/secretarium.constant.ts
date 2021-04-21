@@ -29,8 +29,8 @@ export enum ErrorCodes {
 
 export const ErrorMessage: Record<ErrorCodes, string> = {
     [ErrorCodes.EKEYISENC]: 'Key is encrypted',
-    [ErrorCodes.ESCPNOTRD]: 'Can\'t encrypt, SCP session is not ready',
-    [ErrorCodes.EINPASSWD]: 'Can\'t decrypt, Invalid password',
+    [ErrorCodes.ESCPNOTRD]: 'Cannot encrypt, SCP session is not ready',
+    [ErrorCodes.EINPASSWD]: 'Cannot decrypt, Invalid password',
     [ErrorCodes.ETRANSFIL]: 'Transaction failed',
     [ErrorCodes.ETIMOCHEL]: 'Timeout after client hello',
     [ErrorCodes.ETIMOCPOW]: 'Timeout after client proof-of-work',
@@ -46,9 +46,9 @@ export const ErrorMessage: Record<ErrorCodes, string> = {
     [ErrorCodes.EUNSPKMIS]: 'Unsupported, missing key file',
     [ErrorCodes.EUNSPEXPS]: 'Unsupported, expecting a single key file',
     [ErrorCodes.EKEYLDFAI]: 'Failed to load the key file',
-    [ErrorCodes.EKEYNOTEC]: 'Can\'t save, key must be encrypted',
+    [ErrorCodes.EKEYNOTEC]: 'Cannot save, key must be encrypted',
     [ErrorCodes.EXORNOTSS]: 'Array should have the same size',
-    [ErrorCodes.EKEYNOTSL]: 'Key as not been sealed'
+    [ErrorCodes.EKEYNOTSL]: 'Key has not been sealed'
 };
 
 export enum ConnectionState {

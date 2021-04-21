@@ -23,6 +23,9 @@ module.exports = {
             }
         ]
     },
+    externals: {
+        ws: 'ws'
+    },
     optimization: {
         minimize: false
         // minimizer: [new TerserPlugin()]

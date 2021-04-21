@@ -1,3 +1,5 @@
+import BackingSocket from './secretarium.socket';
+
 export enum Protocol {
     pair1 = 'pair1.sp.nanomsg.org'
     // todo: add other ones
@@ -22,12 +24,11 @@ interface SocketHandlers {
 export class WS {
 
     private _requiresHop: boolean;
-    private _socket: WebSocket | null;
+    private _socket?: any;
     private _handlers: SocketHandlers;
 
     constructor() {
         this._requiresHop = false;
-        this._socket = null;
         this._handlers = {};
     }
 
@@ -47,7 +48,7 @@ export class WS {
     }
 
     connect(url: string, protocol: Protocol): WS {
-        const s = new WebSocket(url, [protocol]);
+        const s = new BackingSocket(url, [protocol]);
         s.binaryType = 'arraybuffer';
         s.onopen = this._socket?.onopen || this._handlers.onopen || null;
         s.onclose = this._socket?.onclose || this._handlers.onclose || null;

@@ -19,7 +19,6 @@
 
 var msrCryptoVersion = "1.6.2";
 var global = {};
-var self = undefined;
 
 var msrCrypto = function () {
 
@@ -4786,7 +4785,7 @@ var msrCrypto = function () {
                             name: p.algorithm.hash.name
                         }
                     },
-                    extractable: p.extractable || keyObject.extractable,
+                    extractable: p.extractable || (keyObject && keyObject.extractable),
                     usages: p.usages,
                     type: "secret"
                 }
@@ -5399,7 +5398,7 @@ var msrCrypto = function () {
                 keyData: keyObject.k,
                 keyHandle: {
                     algorithm: p.algorithm,
-                    extractable: p.extractable || keyObject.extractable,
+                    extractable: p.extractable || (keyObject && keyObject.extractable),
                     usages: null || p.usages,
                     type: "secret"
                 },
@@ -5848,7 +5847,7 @@ var msrCrypto = function () {
                 keyData: keyObject.k,
                 keyHandle: {
                     algorithm: p.algorithm,
-                    extractable: p.extractable || keyObject.extractable,
+                    extractable: p.extractable || (keyObject && keyObject.extractable),
                     usages: null || p.usages,
                     type: "secret"
                 }
@@ -7737,7 +7736,7 @@ var msrCrypto = function () {
                     },
                     keyHandle: {
                         algorithm: p.algorithm,
-                        extractable: p.extractable || keyObject.extractable,
+                        extractable: p.extractable || (keyObject && keyObject.extractable),
                         usages: p.usages,
                         type: "public"
                     }
@@ -7769,7 +7768,7 @@ var msrCrypto = function () {
                     keyData: keyObject,
                     keyHandle: {
                         algorithm: p.algorithm,
-                        extractable: p.extractable || keyObject.extractable,
+                        extractable: p.extractable || (keyObject && keyObject.extractable),
                         usages: p.usages,
                         type: keyObject.d ? "private" : "public"
                     }
@@ -8063,7 +8062,7 @@ var msrCrypto = function () {
                     },
                     keyHandle: {
                         algorithm: p.algorithm,
-                        extractable: p.extractable || keyObject.extractable,
+                        extractable: p.extractable || (keyObject && keyObject.extractable),
                         usages: p.usages,
                         type: "public"
                     }
@@ -8094,7 +8093,7 @@ var msrCrypto = function () {
                     keyData: keyObject,
                     keyHandle: {
                         algorithm: p.algorithm,
-                        extractable: p.extractable || keyObject.extractable,
+                        extractable: p.extractable || (keyObject && keyObject.extractable),
                         usages: null || p.usages,
                         type: keyObject.d ? "private" : "public"
                     }
@@ -9194,7 +9193,7 @@ var msrCrypto = function () {
                     algorithm: {
                         name: params.algorithm.name
                     },
-                    extractable: params.extractable || keyObject.extractable,
+                    extractable: params.extractable || (keyObject && keyObject.extractable),
                     usages: params.usages,
                     type: "secret"
                 }

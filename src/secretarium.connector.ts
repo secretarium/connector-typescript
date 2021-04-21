@@ -51,11 +51,11 @@ type TransactionNotificationHandlers = QueryNotificationHandlers & {
 }
 
 export type Query = QueryHandlers & {
-    send?: () => Promise<Record<string, unknown> | string | void>;
+    send: () => Promise<Record<string, unknown> | string | void>;
 }
 
 export type Transaction = TransactionHandlers & {
-    send?: () => Promise<Record<string, unknown> | string | void>;
+    send: () => Promise<Record<string, unknown> | string | void>;
 }
 
 export class SCP {
@@ -175,7 +175,7 @@ export class SCP {
             this._socket.close();
 
         this._updateState(ConnectionState.connecting);
-        const trustedKey = typeof knownTrustedKey === 'string' ? Uint8Array.from(Utils.fromBase64(knownTrustedKey, true)) : knownTrustedKey;
+        const trustedKey = typeof knownTrustedKey === 'string' ? Uint8Array.from(Utils.fromBase64(knownTrustedKey)) : knownTrustedKey;
         const socket = this._socket = new NNG.WS();
         let ecdh: CryptoKeyPair;
         let ecdhPubKeyRaw: Uint8Array;
@@ -239,7 +239,7 @@ export class SCP {
                     }
 
                     const commonSecret = await crypto.subtle.deriveBits(
-                        { name: 'ECDH', public: serverEcdhPubKey }, ecdh.privateKey, 256);
+                        { name: 'ECDH', namedCurve: 'P-256', public: serverEcdhPubKey } as any, ecdh.privateKey, 256);
                     const sha256Common = new Uint8Array(await crypto.subtle.digest({ name: 'SHA-256' }, commonSecret));
                     const symmetricKey = Utils.xor(preMasterSecret, sha256Common);
                     const iv = symmetricKey.subarray(16);
