@@ -9,8 +9,8 @@ module.exports = {
                 regenerator: true
             }
         ],
-        'add-module-exports',
-        'transform-class-properties'
+        '@babel/plugin-proposal-class-properties',
+        'add-module-exports'
     ].concat(process.env.NODE_ENV === 'test' ? [
         'rewire-ts'
     ] : [])
