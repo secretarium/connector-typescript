@@ -4,9 +4,9 @@ describe('Connector Socket', () => {
     it('Provides a socket', async () => {
 
         expect(WebSocket).toBeDefined();
-        expect(() => new WebSocket('locahost')).toThrow();
+        expect(() => new WebSocket('localhost')).toThrow();
 
-        const socket = new WebSocket('wss://locahost');
+        const socket = new WebSocket('wss://localhost');
         expect(socket).toBeDefined();
     });
 });
