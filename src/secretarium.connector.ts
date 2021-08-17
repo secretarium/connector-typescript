@@ -14,6 +14,16 @@ class SCPSession {
     }
 }
 
+type SCPOptions = {
+    logger?: {
+        log?: (...message: any[]) => void;
+        info?: (...message: any[]) => void;
+        debug?: (...message: any[]) => void;
+        warn?: (...message: any[]) => void;
+        error?: (...message: any[]) => void;
+    }
+}
+
 type ErrorHandler = (error: string, requestId: string) => void;
 type ResultHandler = (result: Record<string, unknown> | string | void, requestId: string) => void;
 type NaiveHandler = (requestId: string) => void;
@@ -66,15 +76,18 @@ export class SCP {
     private _onError?: ((err: string) => void) | null = null;
     private _requests: { [key: string]: (QueryNotificationHandlers | TransactionNotificationHandlers) } = {};
     private _session: SCPSession | null = null;
+    private _options: SCPOptions;
 
-    constructor() {
+    constructor(options?: SCPOptions) {
+        this._options = options || {};
         this.reset();
     }
 
-    reset(): SCP {
+    reset(options?: SCPOptions): SCP {
         if (this._socket && this._socket.state > NNG.State.closing)
             this._socket.close();
 
+        this._options = options || this._options || {};
         this._session = null;
         this._onStateChange = null;
         this._onError = null;
@@ -110,12 +123,11 @@ export class SCP {
     private _notify(json: string): void {
         try {
             const o = JSON.parse(json);
-            if (process.env.NODE_ENV === 'development' || process.env.REACT_APP_CFA_PRODUCTION_LOGGING === 'true')
-                console.debug('Secretarium received:', o);
+            this._options.logger?.debug?.('Secretarium received:', o);
             if (o !== null && o.requestId) {
                 const x = this._requests[o.requestId];
                 if (!x) {
-                    console.debug('Unexpected notification: ' + json);
+                    this._options.logger?.warn?.('Unexpected notification: ' + json);
                     return;
                 }
                 if (o.error) {
@@ -154,7 +166,7 @@ export class SCP {
             if (this._onError)
                 this._onError(m);
             else
-                console.error(m);
+                this._options.logger?.error?.(m);
         }
     }
 
@@ -287,7 +299,8 @@ export class SCP {
                     this._updateState(2);
                     socket.close();
                     this._updateState(3);
-                    reject(`${ErrorMessage[ErrorCodes.EUNABLCON]}${(e as any).type ?? e.message ?? e.toString()}`);
+                    const error: string = e.message ?? (e as any).type ?? e.toString();
+                    reject(`${ErrorMessage[ErrorCodes.EUNABLCON]}${error}`);
                 });
         });
     }
@@ -370,10 +383,7 @@ export class SCP {
         const encrypted = await this._encrypt(data);
 
         if (app !== '__local__') {
-
-            if (process.env.NODE_ENV === 'development' || process.env.REACT_APP_CFA_PRODUCTION_LOGGING === 'true')
-                console.debug('Secretarium sending:', JSON.parse(query));
-
+            this._options.logger?.debug?.('Secretarium sending:', JSON.parse(query));
             this._socket.send(encrypted);
         }
     }

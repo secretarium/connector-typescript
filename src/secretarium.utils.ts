@@ -158,7 +158,11 @@ export function encode(s: string): Uint8Array {
 
 export function getRandomString(size = 32): string {
     const a = getRandomBytes(size);
-    return decode(a);
+    let final;
+    while (!final) {
+        final = decode(a);
+    }
+    return final;
 }
 
 export async function hash(data: Uint8Array): Promise<Uint8Array> {
