@@ -6,7 +6,5 @@ describe('Connector Socket', () => {
         expect(WebSocket).toBeDefined();
         expect(() => new WebSocket('localhost')).toThrow();
 
-        const socket = new WebSocket('wss://localhost');
-        expect(socket).toBeDefined();
     });
 });
