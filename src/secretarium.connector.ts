@@ -299,7 +299,8 @@ export class SCP {
                     this._updateState(2);
                     socket.close();
                     this._updateState(3);
-                    reject(`${ErrorMessage[ErrorCodes.EUNABLCON]}${(e as any).type ?? e.message ?? e.toString()}`);
+                    const error: string = e.message ?? (e as any).type ?? e.toString();
+                    reject(`${ErrorMessage[ErrorCodes.EUNABLCON]}${error}`);
                 });
         });
     }
