@@ -57,7 +57,7 @@ var msrCrypto = function () {
                     return (match && match.length > 0) ? match[0] : null;
                 }
             }
-        } else if (typeof self !== "undefined") {
+        } else if (typeof self !== "undefined" && self.location) {
             return self.location.href;
         }
 
