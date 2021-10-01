@@ -115,7 +115,7 @@ export class Key {
 
     static async importRawKey(pubKeyRaw: Uint8Array, priKeyRaw: Uint8Array): Promise<Key> {
 
-        if (pubKeyRaw.length != 64 || priKeyRaw.length != 32)
+        if (pubKeyRaw.length !== 64 || priKeyRaw.length !== 32)
             throw new Error(ErrorMessage[ErrorCodes.EINVKFORM]);
 
         const x = Utils.toBase64(pubKeyRaw.subarray(0, 32), true).split('=')[0];

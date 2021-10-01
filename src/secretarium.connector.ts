@@ -174,11 +174,11 @@ export class SCP {
         return nonce; // proof-of-work verification is currently deactivated
     }
 
-    get state() {
+    get state(): ConnectionState {
         return this._connectionState;
     }
 
-    get bufferedAmount() {
+    get bufferedAmount(): number {
         return this._socket?.bufferedAmount || 0;
     }
 

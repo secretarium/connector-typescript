@@ -25,10 +25,6 @@ var defaultRules = {
         'never'
     ],
     'no-trailing-spaces': 'error',
-    'no-unused-vars': [
-        'warn',
-        { argsIgnorePattern: '^__unused__' }
-    ],
     'quotes': [
         'error',
         'single'
@@ -41,8 +37,9 @@ var defaultRules = {
         'error',
         'always'
     ],
+    'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': [
-        'warn',
+        'error',
         { argsIgnorePattern: '^__unused__' }
     ]
 };
@@ -102,7 +99,13 @@ module.exports = {
                 'jest/globals': true
             }),
             extends: javascriptExtensions,
-            rules: defaultRules
+            rules: {
+                ...defaultRules,
+                'no-unused-vars': [
+                    'warn',
+                    { argsIgnorePattern: '^__unused__' }
+                ]
+            }
         },
         {
             files: [
