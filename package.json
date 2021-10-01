@@ -11,7 +11,6 @@
         "test:mutation": "stryker run ./config/stryker.config.js",
         "build": "rimraf lib && webpack --config ./config/webpack.config.js && tsc -d --declarationDir lib --declarationMap --emitDeclarationOnly",
         "start": "webpack --config ./config/webpack.config.js --progress --color --watch",
-        "serve": "serve",
         "lint": "eslint -c ./config/eslint.config.js --ext .js,.ts .",
         "lint:fix": "eslint  -c ./config/eslint.config.js --fix --ext .js,.ts .",
         "release": "release-it"
@@ -60,7 +59,6 @@
         "mock-socket": "9.0.5",
         "release-it": "14.11.6",
         "rimraf": "3.0.2",
-        "serve": "12.0.1",
         "terser-webpack-plugin": "5.2.4",
         "typescript": "4.3.5",
         "webpack": "5.55.1",
