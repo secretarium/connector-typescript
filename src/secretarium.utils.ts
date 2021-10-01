@@ -85,7 +85,7 @@ export function concatBytesArrays(arrays: Array<Uint8Array>): Uint8Array {
     return c;
 }
 
-export function decode(octets: Uint8Array): string {
+export function decode(octets: Uint8Array, ignoreException = false): string {
     let string = '';
     let i = 0;
     while (i < octets.length) {
@@ -116,7 +116,12 @@ export function decode(octets: Uint8Array): string {
             codePoint = 0xFFFD;
             bytesNeeded = octets.length - i;
         }
-        string += String.fromCodePoint(codePoint);
+        if (ignoreException)
+            try {
+                string += String.fromCodePoint(codePoint);
+            } catch (e) { /* NOOP */ }
+        else
+            string += String.fromCodePoint(codePoint);
         i += bytesNeeded + 1;
     }
     return string;
@@ -160,7 +165,7 @@ export function getRandomString(size = 32): string {
     const a = getRandomBytes(size);
     let final;
     while (!final) {
-        final = decode(a);
+        final = decode(a, true);
     }
     return final;
 }
