@@ -17,7 +17,7 @@
 //*******************************************************************************
 "use strict";
 
-var msrCryptoVersion = "1.6.2";
+var msrCryptoVersion = "1.6.3";
 var global = {};
 
 var msrCrypto = function () {
@@ -7453,7 +7453,7 @@ var msrCrypto = function () {
                 byteLen = Math.ceil(bits / 8),
                 hLen,
                 output = [],
-                infoBytes = algorithm.info,
+                infoBytes = msrcryptoUtilities.toArray(algorithm.info),
                 t = [],
                 i,
                 hmacContext;

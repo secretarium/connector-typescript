@@ -35,7 +35,8 @@ export class Key {
     private _exportableKey?: ClearKeyPair;
     private _exportableEncryptedKey?: EncryptedKeyPairV2;
     private _rawPublicKey?: Uint8Array;
-    private constructor(keyPair: CryptoKeyPair, encryptedKeyPair?: EncryptedKeyPairV2) {
+
+    constructor(keyPair: CryptoKeyPair, encryptedKeyPair?: EncryptedKeyPairV2) {
         this._cryptoKeyPair = keyPair;
         this._exportableEncryptedKey = encryptedKeyPair;
     }
@@ -105,6 +106,23 @@ export class Key {
 
         const publicKey = await crypto.subtle.importKey('jwk', exportableKey.publicKey, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']);
         const privateKey = await crypto.subtle.importKey('jwk', exportableKey.privateKey, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']);
+
+        return new Key({
+            publicKey,
+            privateKey
+        });
+    }
+
+    static async importRawKey(pubKeyRaw: Uint8Array, priKeyRaw: Uint8Array): Promise<Key> {
+
+        if (pubKeyRaw.length !== 64 || priKeyRaw.length !== 32)
+            throw new Error(ErrorMessage[ErrorCodes.EINVKFORM]);
+
+        const x = Utils.toBase64(pubKeyRaw.subarray(0, 32), true).split('=')[0];
+        const y = Utils.toBase64(pubKeyRaw.subarray(32), true).split('=')[0];
+        const d = Utils.toBase64(priKeyRaw, true).split('=')[0];
+        const publicKey = await crypto.subtle.importKey('jwk', { crv: 'P-256', kty: 'EC', x: x, y: y }, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']);
+        const privateKey = await crypto.subtle.importKey('jwk', { crv: 'P-256', kty: 'EC', x: x, y: y, d: d }, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']);
 
         return new Key({
             publicKey,
