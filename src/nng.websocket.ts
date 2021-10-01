@@ -1,15 +1,9 @@
+import { ConnectionState } from './secretarium.constant';
 import BackingSocket from './secretarium.socket';
 
 export enum Protocol {
     pair1 = 'pair1.sp.nanomsg.org'
     // todo: add other ones
-}
-
-export enum State {
-    connecting,
-    open,
-    closing,
-    closed
 }
 
 type EventHandler<T = Event> = (event: T) => void;
@@ -32,8 +26,8 @@ export class WS {
         this._handlers = {};
     }
 
-    get state(): State {
-        return this._socket?.readyState || State.closed;
+    get state(): ConnectionState {
+        return this._socket?.readyState || ConnectionState.closed;
     }
 
     get bufferedAmount(): number {

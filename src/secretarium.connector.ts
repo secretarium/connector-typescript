@@ -84,7 +84,7 @@ export class SCP {
     }
 
     reset(options?: SCPOptions): SCP {
-        if (this._socket && this._socket.state > NNG.State.closing)
+        if (this._socket && this._socket.state > ConnectionState.closing)
             this._socket.close();
 
         this._options = options || this._options || {};
@@ -92,7 +92,7 @@ export class SCP {
         this._onStateChange = null;
         this._onError = null;
         this._requests = {};
-        this._updateState(3);
+        this._updateState(ConnectionState.closed);
         return this;
     }
 
@@ -161,7 +161,7 @@ export class SCP {
                 }
             }
         }
-        catch (e) {
+        catch (e: any) {
             const m = `Error '${e.message}' when received '${JSON.stringify(json)}'`;
             if (this._onError)
                 this._onError(m);
@@ -183,7 +183,7 @@ export class SCP {
     }
 
     connect(url: string, userKey: Key, knownTrustedKey: Uint8Array | string, protocol: NNG.Protocol = NNG.Protocol.pair1): Promise<void> {
-        if (this._socket && this._socket.state > NNG.State.closing)
+        if (this._socket && this._socket.state > ConnectionState.closing)
             this._socket.close();
 
         this._updateState(ConnectionState.connecting);
@@ -208,6 +208,8 @@ export class SCP {
                         .onclose(() => { this._updateState(ConnectionState.closed); });
 
                     ecdh = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+                    if (!ecdh.publicKey)
+                        return Promise.reject(ErrorMessage[ErrorCodes.EECDHGENF]);
                     ecdhPubKeyRaw = new Uint8Array(await crypto.subtle.exportKey('raw', ecdh.publicKey)).subarray(1);
                     return new Promise((resolve, reject) => {
                         const tId = setTimeout(() => { reject(ErrorMessage[ErrorCodes.ETIMOCHEL]); }, 3000);
@@ -250,6 +252,9 @@ export class SCP {
                         }
                     }
 
+                    if (!ecdh.privateKey)
+                        return Promise.reject(ErrorMessage[ErrorCodes.EECDHGENF]);
+
                     const commonSecret = await crypto.subtle.deriveBits(
                         { name: 'ECDH', namedCurve: 'P-256', public: serverEcdhPubKey } as any, ecdh.privateKey, 256);
                     const sha256Common = new Uint8Array(await crypto.subtle.digest({ name: 'SHA-256' }, commonSecret));
@@ -261,7 +266,7 @@ export class SCP {
 
                     const cryptoKeyPair = userKey.getCryptoKeyPair();
                     const publicKeyRaw = await userKey.getRawPublicKey();
-                    if (!userKey || !cryptoKeyPair || !publicKeyRaw)
+                    if (!userKey || !cryptoKeyPair?.privateKey || !publicKeyRaw)
                         throw new Error(ErrorMessage[ErrorCodes.ETINUSRKY]);
 
                     const nonce = Utils.getRandomBytes(32);
@@ -292,13 +297,13 @@ export class SCP {
                         this._notify(json);
                     });
 
-                    this._updateState(1);
+                    this._updateState(ConnectionState.secure);
                     resolve();
                 })
                 .catch((e: Error) => {
-                    this._updateState(2);
+                    this._updateState(ConnectionState.closing);
                     socket.close();
-                    this._updateState(3);
+                    this._updateState(ConnectionState.closed);
                     const error: string = e.message ?? (e as any).type ?? e.toString();
                     reject(`${ErrorMessage[ErrorCodes.EUNABLCON]}${error}`);
                 });
@@ -364,7 +369,7 @@ export class SCP {
     }
 
     async send(app: string, command: string, requestId: string, args: Record<string, unknown> | string): Promise<void> {
-        if (!this._socket || !this._session || this._socket.state !== NNG.State.open) {
+        if (!this._socket || !this._session || this._socket.state !== ConnectionState.secure) {
             const z = this._requests[requestId]?.onError;
             if (z) {
                 z.forEach(cb => cb(ErrorMessage[ErrorCodes.ENOTCONNT], requestId));
