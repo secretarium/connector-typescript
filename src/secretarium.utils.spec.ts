@@ -40,6 +40,7 @@ describe('Connector Utils', () => {
 
         expect(Utils.getRandomBytes()).toBeInstanceOf(Uint8Array);
         expect(Utils.getRandomBytes(42).length).toBe(42);
-        expect(Utils.getRandomString()).toBeDefined();
+        for (let i = 0; i < 42000; i++)
+            expect(Utils.getRandomString()).toBeDefined();
     });
 });
