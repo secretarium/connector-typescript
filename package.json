@@ -55,7 +55,7 @@
         "eslint": "8.0.1",
         "eslint-plugin-import": "2.25.2",
         "eslint-plugin-jest": "25.2.2",
-        "husky": "7.0.2",
+        "husky": "7.0.4",
         "jest": "27.3.1",
         "jest-websocket-mock": "2.2.1",
         "mock-socket": "9.0.6",
