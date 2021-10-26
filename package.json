@@ -47,7 +47,7 @@
         "@types/jest": "27.0.2",
         "@types/ws": "8.2.0",
         "@typescript-eslint/eslint-plugin": "5.2.0",
-        "@typescript-eslint/parser": "5.1.0",
+        "@typescript-eslint/parser": "5.2.0",
         "babel-loader": "8.2.3",
         "babel-plugin-add-module-exports": "1.0.4",
         "babel-plugin-rewire-ts": "1.4.0",
