@@ -54,7 +54,7 @@
         "commitlint": "14.1.0",
         "eslint": "8.1.0",
         "eslint-plugin-import": "2.25.2",
-        "eslint-plugin-jest": "25.2.2",
+        "eslint-plugin-jest": "25.2.3",
         "husky": "7.0.4",
         "jest": "27.3.1",
         "jest-websocket-mock": "2.2.1",
