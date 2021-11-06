@@ -51,7 +51,7 @@ export class WS {
             s.onerror = this._socket?.onerror || this._handlers.onerror || null;
             this._requiresHop = protocol === Protocol.pair1;
             this._socket = s;
-        } catch (e) {
+        } catch (e: any) {
             onerror = this._socket?.onerror || this._handlers.onerror || null;
             onerror?.(e);
         }
