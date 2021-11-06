@@ -99,4 +99,14 @@ describe('Connector key', () => {
         expect(nextClearKey).toEqual(clearKey);
     });
 
+    test('Check consistant key size', async () => {
+
+        for (let i = 0; i < 1000; i++) {
+            const keyPair = await Key.createKey();
+            const rawPubKey = await keyPair.getRawPublicKey();
+            expect(rawPubKey.length).toBe(64);
+        }
+
+    }, 100000);
+
 });
