@@ -9,7 +9,7 @@
         "preinstall": "node ./scripts/preinstall.js",
         "test": "jest --passWithNoTests --coverage",
         "test:mutation": "stryker run ./config/stryker.config.js",
-        "build": "rimraf lib && webpack --config ./config/webpack.config.js && tsc -d --declarationDir lib --declarationMap --emitDeclarationOnly",
+        "build": "rimraf lib && webpack --config ./config/webpack.config.js && tsc -d --allowJs --declarationDir lib --declarationMap --emitDeclarationOnly",
         "start": "webpack --config ./config/webpack.config.js --progress --color --watch",
         "lint": "eslint -c ./config/eslint.config.js --ext .js,.ts .",
         "lint:fix": "eslint  -c ./config/eslint.config.js --fix --ext .js,.ts .",
