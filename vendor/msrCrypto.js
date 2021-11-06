@@ -7994,7 +7994,7 @@ var msrCrypto = function () {
             var dtb = cryptoMath.digitsToBytes;
 
             function padTo8BytesIncrement(array) {
-                return array;
+                return msrcryptoUtilities.padFront(array, 0, Math.ceil(array.length / 8) * 8)
             }
             var x = padTo8BytesIncrement(dtb(keyPairData.publicKey.x));
             var y = padTo8BytesIncrement(dtb(keyPairData.publicKey.y));

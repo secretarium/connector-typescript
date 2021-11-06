@@ -1,6 +1,7 @@
 {
     "include": [
-        "./src"
+        "./src",
+        "./vendor",
     ],
     "exclude": [
         "**/__tests__/**"
@@ -9,6 +10,8 @@
         "baseUrl": "./src",
         "outDir": "./lib",
         "sourceMap": true,
+        "importHelpers": true,
+        "removeComments": true,
         "allowUnreachableCode": false,
         "allowUnusedLabels": false,
         "esModuleInterop": true,

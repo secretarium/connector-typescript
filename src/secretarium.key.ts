@@ -76,8 +76,8 @@ export class Key {
         if (!this._exportableKey)
             this._exportableKey = {
                 version: CURRENT_KEY_VERSION,
-                publicKey: await crypto.subtle.exportKey('jwk', this._cryptoKeyPair.publicKey),
-                privateKey: await crypto.subtle.exportKey('jwk', this._cryptoKeyPair.privateKey)
+                publicKey: await crypto.subtle.exportKey('jwk', this._cryptoKeyPair.publicKey!),
+                privateKey: await crypto.subtle.exportKey('jwk', this._cryptoKeyPair.privateKey!)
             };
         return this._exportableKey;
     }
@@ -90,7 +90,7 @@ export class Key {
 
     async getRawPublicKey(): Promise<Uint8Array> {
         if (!this._rawPublicKey)
-            this._rawPublicKey = new Uint8Array(await crypto.subtle.exportKey('raw', this._cryptoKeyPair.publicKey)).subarray(1);
+            this._rawPublicKey = new Uint8Array(await crypto.subtle.exportKey('raw', this._cryptoKeyPair.publicKey!)).subarray(1);
         return this._rawPublicKey;
     }
 
