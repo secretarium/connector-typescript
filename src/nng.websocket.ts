@@ -42,14 +42,19 @@ export class WS {
     }
 
     connect(url: string, protocol: Protocol): WS {
-        const s = new BackingSocket(url, [protocol]);
-        s.binaryType = 'arraybuffer';
-        s.onopen = this._socket?.onopen || this._handlers.onopen || null;
-        s.onclose = this._socket?.onclose || this._handlers.onclose || null;
-        s.onmessage = this._socket?.onmessage || this._handlers.onmessage || null;
-        s.onerror = this._socket?.onerror || this._handlers.onerror || null;
-        this._requiresHop = protocol === Protocol.pair1;
-        this._socket = s;
+        try {
+            const s = new BackingSocket(url, [protocol]);
+            s.binaryType = 'arraybuffer';
+            s.onopen = this._socket?.onopen || this._handlers.onopen || null;
+            s.onclose = this._socket?.onclose || this._handlers.onclose || null;
+            s.onmessage = this._socket?.onmessage || this._handlers.onmessage || null;
+            s.onerror = this._socket?.onerror || this._handlers.onerror || null;
+            this._requiresHop = protocol === Protocol.pair1;
+            this._socket = s;
+        } catch (e) {
+            onerror = this._socket?.onerror || this._handlers.onerror || null;
+            onerror?.(e);
+        }
         return this;
     }
 
