@@ -1503,6 +1503,13 @@
     conventional-recommended-bump "^6.1.0"
     prepend-file "^2.0.0"
 
+"@secretarium/crypto@0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@secretarium/crypto/-/crypto-0.1.0.tgz#571efc92ca65bcf80f2cea8ec6f3711e3b968723"
+  integrity sha512-d7dV8yfyoWaI2PPhYXgWWcsdDFupl+P51uaOi4ONrqHBUummtNjNB18kN1+sSlDUVdRQFJS6XGCuRXnayr9t/w==
+  dependencies:
+    js-base64 "3.7.2"
+
 "@sindresorhus/is@^0.14.0":
   version "0.14.0"
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-0.14.0.tgz#9fb3a3cf3132328151f353de4632e01e52102bea"

@@ -1,4 +1,3 @@
-import * as Utils from './secretarium.utils';
 import * as Constants from './secretarium.constant';
 import * as TC from './secretarium.connector';
 import * as TK from './secretarium.key';
@@ -11,7 +10,6 @@ export type EncryptedKeyPairV0 = TK.EncryptedKeyPairV0;
 export type EncryptedKeyPairV2 = TK.EncryptedKeyPairV2;
 
 export {
-    Utils,
     Constants
 };
 
@@ -24,5 +22,6 @@ export {
 } from './secretarium.connector';
 
 export {
-    default as crypto
-} from './secretarium.crypto';
+    default as crypto,
+    Utils
+} from '@secretarium/crypto';

@@ -1,7 +1,6 @@
 {
     "include": [
-        "./src",
-        "./vendor",
+        "./src"
     ],
     "exclude": [
         "**/__tests__/**"
