@@ -41,7 +41,7 @@
         "@babel/plugin-transform-runtime": "7.16.0",
         "@babel/preset-env": "7.16.0",
         "@babel/preset-typescript": "7.16.0",
-        "@babel/runtime": "7.16.0",
+        "@babel/runtime": "7.16.3",
         "@commitlint/config-conventional": "14.1.0",
         "@release-it/conventional-changelog": "3.3.0",
         "@stryker-mutator/core": "5.4.1",
